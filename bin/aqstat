@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 
-try:
-    from aqstat.app import main
-except ImportError:
-    import os
-    sys.path.insert(0, os.path.abspath(os.path.join(
-        os.path.dirname(sys.modules[__name__].__file__), "..")))
-    from aqstat.app import main
+script_dir = os.path.abspath(os.path.dirname(sys.modules[__name__].__file__))
+if os.path.isfile(os.path.join(script_dir, "..", "aqstat", "__init__.py")):
+    sys.path.insert(0, os.path.abspath(os.path.join(script_dir, "..")))
 
-sys.exit(main(sys.argv[1:]))
+from aqstat.app import main
+
+main()
