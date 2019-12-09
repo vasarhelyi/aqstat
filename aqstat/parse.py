@@ -4,7 +4,18 @@ import csv
 from datetime import datetime
 
 def parse_raw_aq_csv(filename):
-    """Read raw AQ data from csv file."""
+    """Read raw AQ data from csv file.
+
+    Parameters:
+        filename (path): the file to parse. Format of the file is expected to be
+            the one used by the luftdaten.info project, e.g. as here:
+            https://www.madavi.de/sensor/csvfiles.php?sensor=esp8266-11797099
+
+    Return:
+        data dictionary where eah key is a column header in the original .csv
+        and each value is a list of the data from that specific column.
+
+    """
     with open(filename) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=';')
         header = None
