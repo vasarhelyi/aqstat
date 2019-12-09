@@ -14,6 +14,7 @@ TODO:
 """
 
 import click
+import logging
 from pathlib import Path
 
 from .aqdata import AQData
@@ -21,15 +22,24 @@ from .plot import plot_humidity, plot_pm, plot_pm_ratio, plot_temperature, \
     plot_pm_vs_humidity, plot_pm_vs_temperature
 
 @click.command()
+@click.option("-v", "--verbose", count=True, help="increase logging verbosity")
 @click.argument("inputdir", type=click.Path(exists=True))
-def main(inputdir):
+def main(inputdir, verbose=False):
     """Plot all kinds of air quality related stuff from .csv files in INPUTDIR."""
 
+    # setup logging
+    if verbose > 1:
+        log_level = logging.DEBUG
+    elif verbose > 0:
+        log_level = logging.INFO
+    else:
+        log_level = logging.WARN
+    logging.basicConfig(level=log_level, format="%(message)s")
     # initialize empty dataset
     data = AQData()
     # parse all data
-    for filename in Path(inputdir).glob("*.csv"):
-        print("Parsing", filename)
+    for filename in sorted(Path(inputdir).glob("*.csv")):
+        logging.info("Parsing {}".format(filename))
         data = data.merge(AQData.from_csv(filename))
 
     # plot PM data

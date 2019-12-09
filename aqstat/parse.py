@@ -2,6 +2,7 @@
 
 import csv
 from datetime import datetime
+import logging
 
 def parse_raw_aq_csv(filename):
     """Read raw AQ data from csv file.
@@ -35,7 +36,7 @@ def parse_raw_aq_csv(filename):
                         else:
                             data[key].append(float(value))
                     except ValueError:
-                        print("ERROR parsing file {}, line {}, column '{}', value '{}'".format(
+                        logging.error("error parsing file {}, line {}, column '{}', value '{}'".format(
                             filename, csv_reader.line_num, key, value))
                         raise
     return data
