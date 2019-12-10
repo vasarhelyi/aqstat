@@ -34,7 +34,7 @@ def main(inputdir, verbose=False):
         log_level = logging.INFO
     else:
         log_level = logging.WARN
-    logging.basicConfig(level=log_level, format="%(message)s")
+    logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
     # initialize empty dataset
     data = AQData()
     # parse all data
