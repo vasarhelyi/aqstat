@@ -17,6 +17,7 @@ def plot_humidity(data):
     plt.plot(data.time, data.humidity, label="humidity")
     plt.ylabel("humidity (%)")
     plt.grid(axis='y')
+    plt.title("Sensor ID: {}".format(data.sensor_id))
     plt.show()
 
 def plot_pm(data):
@@ -31,13 +32,14 @@ def plot_pm(data):
     plt.tight_layout()
     plt.plot(data.time, data.pm10, label="PM10")
     plt.plot(data.time, data.pm2_5, label="PM2.5")
-    plt.plot(daily_data.time, daily_data.pm10, 'o', label="daily PM10")
-    plt.plot(daily_data.time, daily_data.pm2_5, 'o', label="daily PM2.5")
+    plt.plot(daily_data.time, daily_data.pm10, 'ro', label="daily PM10")
+    plt.plot(daily_data.time, daily_data.pm2_5, 'ko', label="daily PM2.5")
     plt.plot([data.time[0], data.time[-1]], [50, 50], 'r--', label="PM10 24h limit")
     plt.plot([data.time[0], data.time[-1]], [25, 25], 'k--', label="PM2.5 yearly limit")
     plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     plt.grid(axis='y')
     plt.legend()
+    plt.title("Sensor ID: {}".format(data.sensor_id))
     plt.show()
 
 def plot_pm_ratio(data):
@@ -53,6 +55,7 @@ def plot_pm_ratio(data):
     plt.grid(axis='y')
     plt.legend()
     plt.tight_layout()
+    plt.title("Sensor ID: {}".format(data.sensor_id))
     plt.show()
 
 def plot_temperature(data):
@@ -66,6 +69,7 @@ def plot_temperature(data):
     plt.ylabel(r"temperature ($\mathrm{\degree C}$)")
     plt.grid(axis='y')
     plt.tight_layout()
+    plt.title("Sensor ID: {}".format(data.sensor_id))
     plt.show()
 
 def plot_pm_vs_humidity(data):
@@ -82,6 +86,7 @@ def plot_pm_vs_humidity(data):
     plt.title("Pearson: {}".format(pearson(data.pm10, data.humidity)))
     plt.grid()
     plt.tight_layout()
+    plt.title("Sensor ID: {}".format(data.sensor_id))
     plt.show()
 
 def plot_pm_vs_temperature(data):
@@ -95,7 +100,11 @@ def plot_pm_vs_temperature(data):
     plt.plot(data.temperature, data.pm2_5, 'o', markersize=markersize, label="PM2.5-temp")
     plt.xlabel(r"temperature ($\mathrm{\degree C}$)")
     plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
-    plt.title("Pearson: {}".format(pearson(data.pm10, data.temperature)))
+    plt.title("\n".join([
+        "Sensor ID: {}".format(data.sensor_id),
+        "Pearson corr: {}".format(pearson(data.pm10, data.temperature))
+    ]))
+    plt.title2()
     plt.grid()
     plt.tight_layout()
     plt.show()
