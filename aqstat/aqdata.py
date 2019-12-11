@@ -5,13 +5,29 @@ from collections import namedtuple
 from .parse import parse_id_from_raw_aq_filename, parse_raw_aq_csv
 
 
+# TODO: redefine the whole class as a numpy array and define data elements
+#       as @properties returning a specific column of the dataset.
+#       This might be much faster later on...
 class AQData(namedtuple("AQData", "time temperature humidity pm10 pm2_5")):
     """A generic class to store air quality data."""
 
+    # TODO: sort right after we define a new instance
     def __new__(self, time=[], temperature=[], humidity=[], pm10=[], pm2_5=[]):
         return super(AQData, self).__new__(self, time, temperature, humidity,
             pm10, pm2_5
         )
+
+    def sort(self):
+        """Sort data according to timestamps.
+
+        Parameters:
+            -
+        Return:
+            sorted data as new class
+        """
+        return self.__class__(*map(list, zip(*sorted(zip(self.time,
+            self.temperature, self.humidity, self.pm10, self.pm2_5
+        )))))
 
     def merge(self, other):
         """Returns another dataset that is the union of this dataset and another
@@ -24,14 +40,13 @@ class AQData(namedtuple("AQData", "time temperature humidity pm10 pm2_5")):
             object: the union of this dataset and the other dataset
         """
 
-        # TODO: sort according to time
         return self.__class__(
             time=self.time + other.time,
             temperature=self.temperature + other.temperature,
             humidity=self.humidity + other.humidity,
             pm10=self.pm10 + other.pm10,
             pm2_5=self.pm2_5 + other.pm2_5,
-        )
+        ).sort()
 
 
 class AQSensor(object):

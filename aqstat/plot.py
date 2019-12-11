@@ -2,7 +2,9 @@
 
 import matplotlib.pyplot as plt
 
-from .stat import daily_average, pearson
+import logging
+
+from .stat import daily_average, get_overlapping_data, pearson
 
 # global parameters
 markersize=3
@@ -29,6 +31,24 @@ def plot_multiple_pm(sensors, pm10=True, pm2_5=True):
         pm2_5 (bool): should we plot pm2_5 data?
 
     """
+   # log Pearson correlation values between different sensor data
+    for i in range(1, len(sensors)):
+        for j in range(i):
+            # TODO: time synchronization is not perfect, interpolation would be needed!
+            a, b = get_overlapping_data(sensors[i].data, sensors[j].data)
+            if pm10:
+                logging.info("Pearson PM10 {}-{}: {:.3f}".format(
+                    sensors[i].sensor_id,
+                    sensors[j].sensor_id,
+                    pearson(a.pm10, b.pm10)
+                ))
+            if pm2_5:
+                logging.info("Pearson PM2.5 {}-{}: {:.3f}".format(
+                    sensors[i].sensor_id,
+                    sensors[j].sensor_id,
+                    pearson(a.pm2_5, b.pm2_5)
+                ))
+
     plt.tight_layout()
     for sensor in sensors:
         daily_data = daily_average(sensor.data)
