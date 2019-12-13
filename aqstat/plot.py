@@ -74,10 +74,13 @@ def plot_pm(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
+    # TODO: use resample instead
     daily_data = sensor.groupby('d').mean().reset_index()
 
-    ax = sensor.data.plot("time", "pm10", label="PM10")
+    ax = plt.figure().gca()
+    sensor.data.plot("time", "pm10", label="PM10", ax=ax)
     sensor.data.plot("time", "pm2_5", label="PM2.5", ax=ax)
+    sensor.data.plot("time", "pm2_5_calib", label="PM2.5_calib", ax=ax)
     daily_data.plot("time", "pm10", style='ro', label="daily PM10", ax=ax)
     daily_data.plot("time", "pm2_5", style='ko', label="daily PM2.5", ax=ax)
     plt.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]], [50, 50], 'r--', label="PM10 24h limit")
@@ -95,9 +98,7 @@ def plot_pm_ratio(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    plt.plot(sensor.data.time, [x / y for x, y in \
-        zip(sensor.data.pm10, sensor.data.pm2_5)], label="PM10 / PM2.5"
-    )
+    sensor.data.plot("time", "pm10_per_pm2_5", label="PM10 / PM2.5")
     plt.grid(axis='y')
     plt.legend()
     plt.title("Sensor ID: {}".format(sensor.sensor_id))
@@ -123,7 +124,8 @@ def plot_pm_vs_humidity(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    ax = sensor.data.plot("humidity", "pm10", style='o', ms=markersize, label="PM10-humidity")
+    ax = plt.figure().gca()
+    sensor.data.plot("humidity", "pm10", style='o', ms=markersize, label="PM10-humidity", ax=ax)
     sensor.data.plot("humidity", "pm2_5", style='o', ms=markersize, label="PM2.5-humidity", ax=ax)
     plt.xlabel("humidity (%)")
     plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
@@ -141,7 +143,8 @@ def plot_pm_vs_temperature(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    ax = sensor.data.plot("temperature", "pm10", style='o', ms=markersize, label="PM10-temp")
+    ax = plt.figure().gca()
+    sensor.data.plot("temperature", "pm10", style='o', ms=markersize, label="PM10-temp", ax=ax)
     sensor.data.plot("temperature", "pm2_5", style='o', ms=markersize, label="PM2.5-temp", ax=ax)
     plt.xlabel(r"temperature ($\mathrm{\degree C}$)")
     plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")

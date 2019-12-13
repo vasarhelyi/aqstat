@@ -53,6 +53,9 @@ def main(inputdir, verbose=False):
             sensors.append(AQData())
             i = -1
         sensors[i].merge(newsensor, inplace=True)
+    # perform calibration on sensor data
+    for sensor in sensors:
+        sensor.calibrate()
 
     # plot all kinds of things
     for sensor in sensors:
