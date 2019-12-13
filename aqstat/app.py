@@ -10,7 +10,7 @@ import click
 import logging
 from pathlib import Path
 
-from .aqdata import AQData, AQSensor
+from .aqdata import AQData
 from .plot import plot_humidity, plot_multiple_pm, plot_pm, plot_pm_ratio, \
     plot_temperature, plot_pm_vs_humidity, plot_pm_vs_temperature
 
@@ -47,13 +47,14 @@ def main(inputdir, verbose=False):
     sensors = []
     for filename in sorted(Path(inputdir).glob("**/*.csv")):
         logging.info("Parsing {}".format(filename))
-        newsensor = AQSensor.from_csv(filename)
+        newsensor = AQData.from_csv(filename)
         i = find_sensor_with_id(sensors, newsensor.sensor_id)
         if i is None:
-            sensors.append(AQSensor())
+            sensors.append(AQData())
             i = -1
-        sensors[i] = sensors[i].merge(newsensor)
+        sensors[i].merge(newsensor, inplace=True)
 
+    # plot all kinds of things
     for sensor in sensors:
         # plot PM data
         plot_pm(sensor)
