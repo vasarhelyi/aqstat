@@ -65,23 +65,23 @@ def main(ctx, inputdir, verbose=False):
     ctx.obj['sensors'] = sensors
 
 @main.command()
-@click.option("-pm", "--particle_matter", is_flag=True, help="plot PM data")
+@click.option("-p", "--particle", is_flag=True, help="plot PM data")
 @click.option("-h", "--humidity", is_flag=True, help="plot humidity data")
 @click.option("-t", "--temperature", is_flag=True, help="plot temperature data")
-@click.option("-mpm", "--multiple_particle_matter", is_flag=True, help="plot multiple PM data")
+@click.option("-mp", "--multiple_particle", is_flag=True, help="plot multiple PM data")
 @click.option("-mh", "--multiple_humidity", is_flag=True, help="plot multiple humidity data")
 @click.option("-mt", "--multiple_temperature", is_flag=True, help="plot multiple temperature data")
 @click.pass_context
-def plot(ctx, particle_matter, humidity, temperature, multiple_particle_matter,
-    multiple_humidity, multiple_temperature=False):
+def plot(ctx, particle=False, humidity=False, temperature=False,
+    multiple_particle=False, multiple_humidity=False, multiple_temperature=False):
     """Plot AQ data in various ways."""
-    all = not (particle_matter or humidity or temperature or
-        multiple_particle_matter or multiple_humidity or multiple_temperature)
+    all = not (particle or humidity or temperature or
+        multiple_particle or multiple_humidity or multiple_temperature)
     sensors = ctx.obj['sensors']
     # plot all kinds of things
     for sensor in sensors:
         # plot PM data
-        if all or particle_matter:
+        if all or particle:
             plot_pm(sensor)
             plot_pm_ratio(sensor)
         # plot temperature date
@@ -96,7 +96,7 @@ def plot(ctx, particle_matter, humidity, temperature, multiple_particle_matter,
             plot_pm_vs_humidity(sensor)
 
     if len(sensors) > 1:
-        if all or multiple_particle_matter:
+        if all or multiple_particle:
             plot_multiple_pm(sensors, pm10=True, pm2_5=True)
         if all or multiple_humidity:
             plot_multiple_humidity(sensors)
