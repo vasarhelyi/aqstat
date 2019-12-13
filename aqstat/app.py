@@ -11,8 +11,9 @@ import logging
 from pathlib import Path
 
 from .aqdata import AQData
-from .plot import plot_humidity, plot_multiple_pm, plot_pm, plot_pm_ratio, \
-    plot_temperature, plot_pm_vs_humidity, plot_pm_vs_temperature
+from .plot import plot_humidity, plot_multiple_pm, plot_multiple_humidity, \
+    plot_multiple_temperature, plot_pm, plot_pm_ratio, plot_temperature, \
+    plot_pm_vs_humidity, plot_pm_vs_temperature
 
 def find_sensor_with_id(sensors, sensor_id):
     """Find a sensor index with matching sensor_id. If not found but there is
@@ -27,13 +28,17 @@ def find_sensor_with_id(sensors, sensor_id):
         return i
     return None
 
-
-@click.command()
+@click.group()
 @click.option("-v", "--verbose", count=True, help="increase logging verbosity")
 @click.argument("inputdir", type=click.Path(exists=True))
-def main(inputdir, verbose=False):
-    """Plot all kinds of air quality related stuff from all .csv files in the
+@click.pass_context
+def main(ctx, inputdir, verbose=False):
+    """Do all kinds of air quality related stuff from all .csv files in the
     directory tree within INPUTDIR."""
+
+    # ensure that ctx.obj exists and is a dict (in case `main()` is called
+    # by means other than the __main__ == "__name__" block at the bottom
+    ctx.ensure_object(dict)
 
     # setup logging
     if verbose > 1:
@@ -56,20 +61,48 @@ def main(inputdir, verbose=False):
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()
+    # save sensors into the context
+    ctx.obj['sensors'] = sensors
 
+@main.command()
+@click.option("-pm", "--particle_matter", is_flag=True, help="plot PM data")
+@click.option("-h", "--humidity", is_flag=True, help="plot humidity data")
+@click.option("-t", "--temperature", is_flag=True, help="plot temperature data")
+@click.option("-mpm", "--multiple_particle_matter", is_flag=True, help="plot multiple PM data")
+@click.option("-mh", "--multiple_humidity", is_flag=True, help="plot multiple humidity data")
+@click.option("-mt", "--multiple_temperature", is_flag=True, help="plot multiple temperature data")
+@click.pass_context
+def plot(ctx, particle_matter, humidity, temperature, multiple_particle_matter,
+    multiple_humidity, multiple_temperature=False):
+    """Plot AQ data in various ways."""
+    all = not (particle_matter or humidity or temperature or
+        multiple_particle_matter or multiple_humidity or multiple_temperature)
+    sensors = ctx.obj['sensors']
     # plot all kinds of things
     for sensor in sensors:
         # plot PM data
-        plot_pm(sensor)
-        plot_pm_ratio(sensor)
+        if all or particle_matter:
+            plot_pm(sensor)
+            plot_pm_ratio(sensor)
         # plot temperature date
-        plot_temperature(sensor)
+        if all or temperature:
+            plot_temperature(sensor)
+            # plot pm vs temperature data
+            plot_pm_vs_temperature(sensor)
         # plot humidity data
-        plot_humidity(sensor)
-        # plot pm vs humidity data
-        plot_pm_vs_humidity(sensor)
-        # plot pm vs temperature data
-        plot_pm_vs_temperature(sensor)
+        if all or humidity:
+            plot_humidity(sensor)
+            # plot pm vs humidity data
+            plot_pm_vs_humidity(sensor)
 
     if len(sensors) > 1:
-        plot_multiple_pm(sensors, pm10=True, pm2_5=True)
+        if all or multiple_particle_matter:
+            plot_multiple_pm(sensors, pm10=True, pm2_5=True)
+        if all or multiple_humidity:
+            plot_multiple_humidity(sensors)
+        if all or multiple_temperature:
+            plot_multiple_temperature(sensors)
+            pass
+
+if __name__ == '__main__':
+    main(obj={})

@@ -13,13 +13,15 @@ import logging
 
 # global parameters
 markersize=3
+humidity_threshold = 70
+
 
 def highlight(x, condition, ax):
     """Highlight plot at the given indices.
 
     Parameters:
-        x (list): the list of x values
-        condition (list): list of bools whether to highlight or not
+        x (pandas list): the list of x values
+        condition (pandas list): list of bools whether to highlight or not
         ax: the matplotlib figure axes to draw onto.
 
     """
@@ -52,6 +54,24 @@ def plot_humidity(sensor):
     plt.ylabel("humidity (%)")
     plt.grid(axis='y')
     plt.title("Sensor ID: {}".format(sensor.sensor_id))
+    plt.show()
+
+def plot_multiple_humidity(sensors):
+    """Plot time series of humidity data from multiple sensors.
+
+    Parameters:
+        sensors (list(AQData)): the sensors containing the dataset to plot
+
+    """
+    ax = plt.figure().gca()
+    for sensor in sensors:
+        sensor.data.plot("time", "humidity", label="{} humidity".format(sensor.sensor_id), ax=ax)
+        plt.ylabel("humidity (%)")
+    plt.plot(plt.xlim(), [humidity_threshold, humidity_threshold], 'r--', label="PM sensor validity limit")
+    plt.ylim([0, 100])
+    plt.yticks([0, humidity_threshold, 100])
+    plt.grid(axis='y')
+    plt.legend()
     plt.show()
 
 def plot_multiple_pm(sensors, pm10=True, pm2_5=True):
@@ -96,6 +116,21 @@ def plot_multiple_pm(sensors, pm10=True, pm2_5=True):
     plt.legend()
     plt.show()
 
+def plot_multiple_temperature(sensors):
+    """Plot time series of temperature data from multiple sensors.
+
+    Parameters:
+        sensors (list(AQData)): the sensors containing the dataset to plot
+
+    """
+    ax = plt.figure().gca()
+    for sensor in sensors:
+        sensor.data.plot("time", "temperature", label="{} temperature".format(sensor.sensor_id), ax=ax)
+        plt.ylabel(r"temperature ($\mathrm{\degree C}$)")
+    plt.grid(axis='y')
+    plt.legend()
+    plt.show()
+
 def plot_pm(sensor):
     """Plot time series of PM10 + PM2.5 data.
 
@@ -105,8 +140,6 @@ def plot_pm(sensor):
     """
     # TODO: use resample instead
     daily_data = sensor.groupby('d').mean().reset_index()
-    # TODO: get rid of low_humidity as it is all - high_humidity
-    humidity_threshold = 70
     high_humidity = sensor.data.humidity > humidity_threshold
 
     f, (a0, a1) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [1, 5]})
