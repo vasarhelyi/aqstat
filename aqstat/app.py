@@ -77,7 +77,7 @@ def plot(ctx, particle=False, humidity=False, temperature=False,
     for sensor in sensors:
         # plot PM data
         if all or particle:
-            plot_pm(sensor, maxy=None)
+            plot_pm(sensor, maxy=300)
             plot_pm_ratio(sensor)
         # plot temperature date
         if all or temperature:
