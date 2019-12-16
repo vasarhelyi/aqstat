@@ -11,7 +11,8 @@ register_matplotlib_converters()
 # global parameters
 markersize=3
 humidity_threshold = 70
-
+pm10_daily_limit = 50
+pm2_5_yearly_limit = 25
 
 def highlight(x, condition, ax):
     """Highlight plot at the given indices.
@@ -130,18 +131,26 @@ def plot_pm(sensor):
     a0.grid(axis='y')
     a0.set_ylabel("humidity (%)")
 
-    sensor.data.plot("time", "pm10", label="PM10", ax=a1)
-    sensor.data.plot("time", "pm2_5", label="PM2.5", ax=a1)
-    sensor.data.plot("time", "pm2_5_calib", label="PM2.5_calib", ax=a1)
+    sensor.data.plot("time", "pm10", label="PM10 (avg={:.1f})".format(sensor.data.pm10.mean()), ax=a1)
+    sensor.data.plot("time", "pm2_5", label="PM2.5 (avg={:.1f})".format(sensor.data.pm2_5.mean()), ax=a1)
+    sensor.data.plot("time", "pm2_5_calib", label="PM2.5_calib (avg={:.1f})".format(sensor.data.pm2_5_calib.mean()), ax=a1)
     daily_data.plot("time", "pm10", style='ro', label="daily PM10", ax=a1)
     daily_data.plot("time", "pm2_5", style='ko', label="daily PM2.5", ax=a1)
-    a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]], [50, 50], 'r--', label="PM10 24h limit")
-    a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]], [25, 25], 'k--', label="PM2.5 yearly limit")
+    a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]],
+        [pm10_daily_limit, pm10_daily_limit], 'r--', label="PM10 24h limit"
+    )
+    a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]],
+        [pm2_5_yearly_limit, pm2_5_yearly_limit], 'k--', label="PM2.5 yearly limit"
+    )
     highlight(sensor.data.time, high_humidity, a1)
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
     plt.legend()
-    plt.title("Sensor ID: {}".format(sensor.sensor_id))
+    plt.title(r"Sensor ID: {}, PM10 polluted days: {}/{}".format(
+        sensor.sensor_id,
+        daily_data.pm10[daily_data.pm10 > pm10_daily_limit].count(),
+        len(daily_data),
+    ))
     plt.show()
 
 def plot_pm_ratio(sensor):
