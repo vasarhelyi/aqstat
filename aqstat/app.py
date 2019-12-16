@@ -75,10 +75,12 @@ def main(ctx, inputdir, verbose=False):
 def plot(ctx, particle=False, humidity=False, temperature=False,
     multiple_particle=False, multiple_humidity=False, multiple_temperature=False):
     """Plot AQ data in various ways."""
+    # if no specific argument is given, plot everything
     all = not (particle or humidity or temperature or
         multiple_particle or multiple_humidity or multiple_temperature)
     sensors = ctx.obj['sensors']
-    # plot all kinds of things
+
+    # plot individual sensor data
     for sensor in sensors:
         # plot PM data
         if all or particle:
@@ -95,6 +97,7 @@ def plot(ctx, particle=False, humidity=False, temperature=False,
             # plot pm vs humidity data
             plot_pm_vs_humidity(sensor)
 
+    # plot multiple sensor data
     if len(sensors) > 1:
         if all or multiple_particle:
             plot_multiple_pm(sensors, pm10=True, pm2_5=True)
@@ -103,6 +106,22 @@ def plot(ctx, particle=False, humidity=False, temperature=False,
         if all or multiple_temperature:
             plot_multiple_temperature(sensors)
             pass
+
+@main.command()
+@click.pass_context
+def test(ctx):
+    """Arbitrary tests on AQ data."""
+
+    # import some things we need only here
+    from .utils import consecutive_pairs
+
+    # get the sensor data from the context
+    sensors = ctx.obj['sensors']
+
+    # print correlation between datasets
+    for a, b in consecutive_pairs(sensors):
+        print(a.corrwith(b, tolerance=60))
+
 
 if __name__ == '__main__':
     main(obj={})

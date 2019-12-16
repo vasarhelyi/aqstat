@@ -1,7 +1,7 @@
 """AQ Class definition for Air Quality data analysis."""
 
 from numpy import log
-from pandas import DataFrame
+from pandas import DataFrame, Timedelta
 
 from .parse import parse_id_from_luftdaten_csv, parse_luftdaten_csv
 
@@ -22,7 +22,7 @@ class AQData(object):
     ):
         self.sensor_id = sensor_id # integer
         self.location = location # lat [deg], lon [deg], amsl [m], agl[m]
-        self.data = data # all the time series of AQ data as pandas DataFrame
+        self.data = data.sort_values(by=["time"]).reset_index(drop=True) # all the time series of AQ data as pandas DataFrame
 
     def calibrate(self):
         """Perform calibration on PM dataset."""
@@ -44,6 +44,39 @@ class AQData(object):
             -0.509 * log(self.data.pm10_per_pm2_5) + 1.2203
         )
 
+    def corrwith(self, other, method="pearson", tolerance=60):
+        """Correlate self with another sensor dataset.
+
+        Parameters:
+            other (AQData): the other dataset to correlate with
+            method (str or callable): 'pearson', 'kendall', 'spearman' or else,
+                for more information see pandas.DataFrame.corrwith
+            tolerance (float): maximum time difference allowed between matching
+                timestamps in the two datasets, expressed as seconds.
+
+                TODO: interpolate datasets to have more accurate matching on
+                stochastically timestamped data
+        Return:
+            pandas Series object containing correlation values between datasets
+        """
+        # create dataframes with time index
+        a = self.data.set_index('time')
+        b = other.data.set_index('time')
+        # create matching dataset with rows that have similar timestamps
+        # TODO: interpolate datasets to have more accurate matching on
+        #       stochastically timestamped data
+        b_matched = b.reindex(a.index, method='nearest',
+            tolerance=Timedelta(seconds=tolerance), axis=0
+        )
+        # calculate correlation
+        result = a.corrwith(other=b_matched, method=method, drop=True)
+        # add number of valid values that were compared to the output
+        # TODO: this is not accurate if there are individual NaN-s in a or b
+        #       in some columns only...
+        result["count"] = b_matched.dropna().shape[0]
+
+        return result
+
     @classmethod
     def from_csv(self, filename):
         """Create a new class from a csv file."""
@@ -51,7 +84,7 @@ class AQData(object):
         raw_data = parse_luftdaten_csv(filename)
         data = raw_data[["Time", "Temp", "Humidity", "SDS_P1", "SDS_P2"]]
         data.columns = self.data_columns
-        return self(sensor_id=sensor_id, data=data.sort_values(by=["time"]))
+        return self(sensor_id=sensor_id, data=data)
 
     # TODO: reimplement with 'resample', it might be better
     def groupby(self, freq):
@@ -90,7 +123,8 @@ class AQData(object):
                              "locations: {} and {}".format(
                 self.location, other.location))
         # merge data
-        data = self.data.append(other.data).sort_values(by=["time"])
+        data = self.data.append(other.data).sort_values(
+            by=["time"]).reset_index(drop=True)
 
         # change data inplace
         if inplace:
@@ -107,4 +141,5 @@ class AQData(object):
 
     def sort(self, inplace=False):
         """Sort data according to time."""
-        return self.data.sort_values(by=["time"], inplace=inplace)
+        return self.data.sort_values(
+            by=["time"], inplace=inplace).reset_index(drop=True)

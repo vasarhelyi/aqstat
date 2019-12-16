@@ -1,15 +1,12 @@
 """This script contains plotting functions for AQData classes."""
 
-from numpy.ma import masked_where
-
+import logging
 import matplotlib.pyplot as plt
 
+from numpy.ma import masked_where
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
-import logging
-
-#from .stat import get_overlapping_data, pearson
 
 # global parameters
 markersize=3
@@ -20,8 +17,8 @@ def highlight(x, condition, ax):
     """Highlight plot at the given indices.
 
     Parameters:
-        x (pandas list): the list of x values
-        condition (pandas list): list of bools whether to highlight or not
+        x (pandas Series): the list of x values
+        condition (pandas Series): list of bools whether to highlight or not
         ax: the matplotlib figure axes to draw onto.
 
     """
@@ -83,24 +80,6 @@ def plot_multiple_pm(sensors, pm10=True, pm2_5=True):
         pm2_5 (bool): should we plot pm2_5 data?
 
     """
-#    # log Pearson correlation values between different sensor data
-#     for i in range(1, len(sensors)):
-#         for j in range(i):
-#             # TODO: time synchronization is not perfect, interpolation would be needed!
-#             a, b = get_overlapping_data(sensors[i].data, sensors[j].data)
-#             if pm10:
-#                 logging.info("Pearson PM10 {}-{}: {:.3f}".format(
-#                     sensors[i].sensor_id,
-#                     sensors[j].sensor_id,
-#                     pearson(a.pm10, b.pm10)
-#                 ))
-#             if pm2_5:
-#                 logging.info("Pearson PM2.5 {}-{}: {:.3f}".format(
-#                     sensors[i].sensor_id,
-#                     sensors[j].sensor_id,
-#                     pearson(a.pm2_5, b.pm2_5)
-#                 ))
-
     ax = plt.figure().gca()
     for sensor in sensors:
         if pm10:
@@ -149,7 +128,7 @@ def plot_pm(sensor):
     a0.set_ylim([0, 100])
     a0.set_yticks([0, humidity_threshold, 100])
     a0.grid(axis='y')
-    a0.set_ylabel("humidity")
+    a0.set_ylabel("humidity (%)")
 
     sensor.data.plot("time", "pm10", label="PM10", ax=a1)
     sensor.data.plot("time", "pm2_5", label="PM2.5", ax=a1)
