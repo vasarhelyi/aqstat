@@ -2,7 +2,7 @@
 coming from https://www.madavi.de/sensor/csvfiles.php?sensor=esp8266-11797099
 
 Note: The script is mostly a "lab" test to catalyze thinking about how this whole
-thing should be treated. See TODO-s below emerging through coding:
+thing should be treated.
 
 """
 
@@ -14,19 +14,7 @@ from .aqdata import AQData
 from .plot import plot_humidity, plot_multiple_pm, plot_multiple_humidity, \
     plot_multiple_temperature, plot_pm, plot_pm_ratio, plot_temperature, \
     plot_pm_vs_humidity, plot_pm_vs_temperature
-
-def find_sensor_with_id(sensors, sensor_id):
-    """Find a sensor index with matching sensor_id. If not found but there is
-    one with None, we return that. If none found, we return None."""
-    first_none = None
-    for i, s in enumerate(sensors):
-        if s.sensor_id == sensor_id:
-            return i
-        if first_none is None and s.sensor_id is None:
-            first_none = i
-    if first_none is not None:
-        return i
-    return None
+from .utils import find_sensor_with_id
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="increase logging verbosity")
