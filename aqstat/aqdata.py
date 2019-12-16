@@ -1,7 +1,7 @@
 """AQ Class definition for Air Quality data analysis."""
 
 from numpy import log
-from pandas import DataFrame, Timedelta
+from pandas import DataFrame, Timedelta, Timestamp
 
 from .parse import parse_id_from_luftdaten_csv, parse_luftdaten_csv
 
@@ -18,11 +18,15 @@ class AQData(object):
     data_columns = "time temperature humidity pm10 pm2_5".split()
 
     def __init__(self, sensor_id=None, location=None,
-        data=DataFrame(columns=data_columns)
+        data=DataFrame(columns=data_columns), date_start=None, date_end=None,
     ):
         self.sensor_id = sensor_id # integer
         self.location = location # lat [deg], lon [deg], amsl [m], agl[m]
         self.data = data.sort_values(by=["time"]).reset_index(drop=True) # all the time series of AQ data as pandas DataFrame
+        if date_start is not None:
+            self.data = self.data[self.data.time.dt.date >= Timestamp(date_start)]
+        if date_end is not None:
+            self.data = self.data[self.data.time.dt.date <= Timestamp(date_end)]
 
     def calibrate(self):
         """Perform calibration on PM dataset."""
@@ -78,13 +82,24 @@ class AQData(object):
         return result
 
     @classmethod
-    def from_csv(self, filename):
-        """Create a new class from a csv file."""
+    def from_csv(self, filename, date_start=None, date_end=None):
+        """Create a new class from a csv file.
+
+        Parameters:
+            filename (Path): file to read (luftdaten.info .csv format so far)
+            date_start (datetime): starting date limit or None if not used
+            date_end (datetime): ending date limit or None if not used.
+
+        Return:
+            a new AQData class with parsed data
+        """
         sensor_id = parse_id_from_luftdaten_csv(filename)
         raw_data = parse_luftdaten_csv(filename)
         data = raw_data[["Time", "Temp", "Humidity", "SDS_P1", "SDS_P2"]]
         data.columns = self.data_columns
-        return self(sensor_id=sensor_id, data=data)
+        # TODO: do not parse outside date_start and date_end at all
+        return self(sensor_id=sensor_id, data=data, date_start=date_start,
+            date_end=date_end)
 
     # TODO: reimplement with 'resample', it might be better
     def groupby(self, freq):

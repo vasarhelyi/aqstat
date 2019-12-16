@@ -137,7 +137,7 @@ def plot_pm(sensor):
     daily_data.plot("time", "pm10", style='ro', label="daily PM10", ax=a1)
     daily_data.plot("time", "pm2_5", style='ko', label="daily PM2.5", ax=a1)
     a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]],
-        [pm10_daily_limit, pm10_daily_limit], 'r--', label="PM10 24h limit"
+        [pm10_daily_limit, pm10_daily_limit], 'r--', label="PM10 daily limit"
     )
     a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]],
         [pm2_5_yearly_limit, pm2_5_yearly_limit], 'k--', label="PM2.5 yearly limit"

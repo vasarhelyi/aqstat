@@ -18,9 +18,11 @@ from .utils import find_sensor_with_id
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="increase logging verbosity")
+@click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
+@click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
 @click.argument("inputdir", type=click.Path(exists=True))
 @click.pass_context
-def main(ctx, inputdir, verbose=False):
+def main(ctx, inputdir, date_start=None, date_end=None, verbose=False):
     """Do all kinds of air quality related stuff from all .csv files in the
     directory tree within INPUTDIR."""
 
@@ -40,7 +42,9 @@ def main(ctx, inputdir, verbose=False):
     sensors = []
     for filename in sorted(Path(inputdir).glob("**/*.csv")):
         logging.info("Parsing {}".format(filename))
-        newsensor = AQData.from_csv(filename)
+        newsensor = AQData.from_csv(filename, date_start=date_start,
+            date_end=date_end
+        )
         i = find_sensor_with_id(sensors, newsensor.sensor_id)
         if i is None:
             sensors.append(AQData())
@@ -49,6 +53,7 @@ def main(ctx, inputdir, verbose=False):
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()
+
     # save sensors into the context
     ctx.obj['sensors'] = sensors
 
@@ -56,9 +61,9 @@ def main(ctx, inputdir, verbose=False):
 @click.option("-p", "--particle", is_flag=True, help="plot PM data")
 @click.option("-h", "--humidity", is_flag=True, help="plot humidity data")
 @click.option("-t", "--temperature", is_flag=True, help="plot temperature data")
-@click.option("-mp", "--multiple_particle", is_flag=True, help="plot multiple PM data")
-@click.option("-mh", "--multiple_humidity", is_flag=True, help="plot multiple humidity data")
-@click.option("-mt", "--multiple_temperature", is_flag=True, help="plot multiple temperature data")
+@click.option("-mp", "--multiple-particle", is_flag=True, help="plot multiple PM data")
+@click.option("-mh", "--multiple-humidity", is_flag=True, help="plot multiple humidity data")
+@click.option("-mt", "--multiple-temperature", is_flag=True, help="plot multiple temperature data")
 @click.pass_context
 def plot(ctx, particle=False, humidity=False, temperature=False,
     multiple_particle=False, multiple_humidity=False, multiple_temperature=False):
