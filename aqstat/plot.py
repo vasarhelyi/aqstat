@@ -111,11 +111,12 @@ def plot_multiple_temperature(sensors):
     plt.legend()
     plt.show()
 
-def plot_pm(sensor):
+def plot_pm(sensor, maxy=None):
     """Plot time series of PM10 + PM2.5 data.
 
     Parameters:
         sensor (AQData): the sensor containing the dataset to plot
+        maxy (float): ylim upper limit for the pm plot
 
     """
     # TODO: use resample instead
@@ -151,6 +152,7 @@ def plot_pm(sensor):
         daily_data.pm10[daily_data.pm10 > pm10_daily_limit].count(),
         len(daily_data),
     ))
+    a1.set_ylim([0, maxy or a1.get_ylim()[1]])
     plt.show()
 
 def plot_pm_ratio(sensor):
