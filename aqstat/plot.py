@@ -41,6 +41,26 @@ def highlight(x, condition, ax):
         )
         start = stop + 1
 
+def plot_daily_variation(sensor, keys):
+    """Plot daily variation of data accumulated through several days.
+
+    Parameters:
+        sensor (AQData): the sensor containing the dataset to plot
+        keys (list[str]): the list of keys of the data Series we need to plot
+    """
+    data = sensor.data.set_index("time")
+    data["hour"] = data.index.hour
+    data = data.groupby(data.hour)
+    mean = data[keys].mean()
+    std = data[keys].std()
+
+    for i, key in enumerate(keys):
+        plt.errorbar(x=mean.index + i * 0.1, y=mean[key], yerr=std[key], label=key)
+    plt.xlabel("hours of day")
+    plt.ylabel("average over days")
+    plt.legend()
+    plt.show()
+
 def plot_humidity(sensor):
     """Plot time series of humidity data.
 

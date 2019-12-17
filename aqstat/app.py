@@ -11,9 +11,9 @@ import logging
 from pathlib import Path
 
 from .aqdata import AQData
-from .plot import plot_humidity, plot_multiple_pm, plot_multiple_humidity, \
-    plot_multiple_temperature, plot_pm, plot_pm_ratio, plot_temperature, \
-    plot_pm_vs_humidity, plot_pm_vs_temperature
+from .plot import plot_daily_variation, plot_humidity, plot_multiple_pm, \
+    plot_multiple_humidity, plot_multiple_temperature, plot_pm, plot_pm_ratio, \
+    plot_temperature, plot_pm_vs_humidity, plot_pm_vs_temperature
 from .utils import find_sensor_with_id
 
 @click.group()
@@ -79,16 +79,19 @@ def plot(ctx, particle=False, humidity=False, temperature=False,
         if all or particle:
             plot_pm(sensor, maxy=300)
             plot_pm_ratio(sensor)
+            plot_daily_variation(sensor, ["pm10", "pm2_5", "pm2_5_calib"])
         # plot temperature date
         if all or temperature:
             plot_temperature(sensor)
             # plot pm vs temperature data
             plot_pm_vs_temperature(sensor)
+            plot_daily_variation(sensor, ["temperature"])
         # plot humidity data
         if all or humidity:
             plot_humidity(sensor)
             # plot pm vs humidity data
             plot_pm_vs_humidity(sensor)
+            plot_daily_variation(sensor, ["humidity"])
 
     # plot multiple sensor data
     if len(sensors) > 1:
