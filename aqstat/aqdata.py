@@ -1,12 +1,17 @@
 """AQ Class definition for Air Quality data analysis."""
 
 from numpy import log
-from pandas import DataFrame, Timedelta, Timestamp
+from pandas import DataFrame, Timedelta, Timestamp, to_datetime
 
 from .parse import parse_id_from_luftdaten_csv, parse_luftdaten_csv
 
 class AQData(object):
-    """A generic class to store AQ sensor parameters and sensor data."""
+    """A generic class to store AQ sensor parameters and sensor data.
+
+    The main .data is stored in a pandas DataFrame class, indexed by
+    the datetime value of each measurement, always sorted according to time.
+
+    """
 
     # TODO: parse and use adaptively, generalize to other sensor types
     sensors = {
@@ -15,18 +20,19 @@ class AQData(object):
         "temperature": "DHT22",
         "humidity": "DHT22",
     }
-    data_columns = "time temperature humidity pm10 pm2_5".split()
+    data_columns = "temperature humidity pm10 pm2_5".split()
 
     def __init__(self, sensor_id=None, location=None,
-        data=DataFrame(columns=data_columns), date_start=None, date_end=None,
+        data=DataFrame(columns=data_columns, index=to_datetime([])),
+        date_start=None, date_end=None,
     ):
         self.sensor_id = sensor_id # integer
         self.location = location # lat [deg], lon [deg], amsl [m], agl[m]
-        self.data = data.sort_values(by=["time"]).reset_index(drop=True) # all the time series of AQ data as pandas DataFrame
+        self.data = data.sort_index() # all the time series of AQ data as pandas DataFrame indexed by datetime
         if date_start is not None:
-            self.data = self.data[self.data.time.dt.date >= Timestamp(date_start)]
+            self.data = self.data[self.data.index.date >= Timestamp(date_start)]
         if date_end is not None:
-            self.data = self.data[self.data.time.dt.date <= Timestamp(date_end)]
+            self.data = self.data[self.data.index.date <= Timestamp(date_end)]
 
     def calibrate(self):
         """Perform calibration on PM dataset."""
@@ -63,21 +69,18 @@ class AQData(object):
         Return:
             pandas Series object containing correlation values between datasets
         """
-        # create dataframes with time index
-        a = self.data.set_index('time')
-        b = other.data.set_index('time')
         # create matching dataset with rows that have similar timestamps
         # TODO: interpolate datasets to have more accurate matching on
         #       stochastically timestamped data
-        b_matched = b.reindex(a.index, method='nearest',
+        other_matched = other.data.reindex(self.data.index, method='nearest',
             tolerance=Timedelta(seconds=tolerance), axis=0
         )
         # calculate correlation
-        result = a.corrwith(other=b_matched, method=method, drop=True)
+        result = self.data.corrwith(other=other_matched, method=method, drop=True)
         # add number of valid values that were compared to the output
         # TODO: this is not accurate if there are individual NaN-s in a or b
         #       in some columns only...
-        result["count"] = b_matched.dropna().shape[0]
+        result["count"] = other_matched.dropna().shape[0]
 
         return result
 
@@ -93,26 +96,15 @@ class AQData(object):
         Return:
             a new AQData class with parsed data
         """
+        # parse data
         sensor_id = parse_id_from_luftdaten_csv(filename)
         raw_data = parse_luftdaten_csv(filename)
-        data = raw_data[["Time", "Temp", "Humidity", "SDS_P1", "SDS_P2"]]
+        # select and rename data columns
+        data = raw_data[["Temp", "Humidity", "SDS_P1", "SDS_P2"]]
         data.columns = self.data_columns
-        # TODO: do not parse outside date_start and date_end at all
+
         return self(sensor_id=sensor_id, data=data, date_start=date_start,
             date_end=date_end)
-
-    # TODO: reimplement with 'resample', it might be better
-    def groupby(self, freq):
-        """Group data of self with a given temporal frequency.
-
-        Parameters:
-            freq (str): the frequency to group by. See possible values at
-                pandas.DatetimeIndex.floor frequency aliases.
-
-        Return:
-            pandas DataFrameGroupBy object with groups of data
-        """
-        return self.data.groupby(by=self.data.time.dt.floor(freq))
 
     def merge(self, other, inplace=False):
         """Returns another sensor dataset that is the union of this sensor
@@ -138,8 +130,7 @@ class AQData(object):
                              "locations: {} and {}".format(
                 self.location, other.location))
         # merge data
-        data = self.data.append(other.data).sort_values(
-            by=["time"]).reset_index(drop=True)
+        data = self.data.append(other.data).sort_index()
 
         # change data inplace
         if inplace:
@@ -155,6 +146,5 @@ class AQData(object):
         )
 
     def sort(self, inplace=False):
-        """Sort data according to time."""
-        return self.data.sort_values(
-            by=["time"], inplace=inplace).reset_index(drop=True)
+        """Sort data according to its datetime index."""
+        return self.data.sort_index(inplace=inplace)

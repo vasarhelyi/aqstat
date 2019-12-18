@@ -32,7 +32,9 @@ def parse_luftdaten_csv(filename):
             https://www.madavi.de/sensor/csvfiles.php?sensor=esp8266-11797099
 
     Return:
-        pandas DataFrame object containing the data stored in the .csv file
+        pandas DataFrame object containing the data stored in the .csv file,
+        indexed with timestamps (by default defined in the "Time" column).
 
     """
-    return read_csv(filename, sep=";", parse_dates=[0])
+    return read_csv(filename, sep=";", parse_dates=[0], index_col=0,
+        infer_datetime_format=True, skipinitialspace=True)

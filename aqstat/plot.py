@@ -27,16 +27,16 @@ def highlight(x, condition, ax):
     stop = 0
     n = len(x)
     while start < n and stop < n:
-        while start < n and not condition.iloc[start]:
+        while start < n and not condition[start]:
             start += 1
         if start >= n:
             break
         stop = start
-        while stop < len(x) and condition.iloc[stop]:
+        while stop < len(x) and condition[stop]:
             stop += 1
         if stop >= n:
             stop -= 1
-        ax.axvspan(x.iloc[start], x.iloc[stop], facecolor='black',
+        ax.axvspan(x[start], x[stop], facecolor='black',
             edgecolor='none', alpha=0.2
         )
         start = stop + 1
@@ -48,16 +48,16 @@ def plot_daily_variation(sensor, keys):
         sensor (AQData): the sensor containing the dataset to plot
         keys (list[str]): the list of keys of the data Series we need to plot
     """
-    data = sensor.data.set_index("time")
-    data["hour"] = data.index.hour
-    data = data.groupby(data.hour)
-    mean = data[keys].mean()
-    std = data[keys].std()
 
     for i, key in enumerate(keys):
-        plt.errorbar(x=mean.index + i * 0.1, y=mean[key], yerr=std[key], label=key)
+        daily_average = sensor.data[key].groupby(sensor.data.index.day).transform("mean")
+        total_average = sensor.data[key].mean()
+        data1 = (sensor.data[key] - total_average).groupby(sensor.data.index.hour).agg(["mean", "std"])
+        data2 = (sensor.data[key] - daily_average).groupby(sensor.data.index.hour).agg(["mean", "std"])
+        plt.errorbar(x=data1.index + i * 0.1, y=data1["mean"], yerr=data1["std"], label="{} - avg({:.1f})".format(key, total_average))
+        plt.errorbar(x=data2.index + i * 0.1, y=data2["mean"], yerr=data2["std"], label="{} - daily_avg".format(key))
     plt.xlabel("hours of day")
-    plt.ylabel("average over days")
+    plt.ylabel("daily variation")
     plt.legend()
     plt.show()
 
@@ -68,7 +68,7 @@ def plot_humidity(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    sensor.data.plot("time", "humidity")
+    sensor.data.plot(y="humidity")
     plt.ylabel("humidity (%)")
     plt.grid(axis='y')
     plt.title("Sensor ID: {}".format(sensor.sensor_id))
@@ -83,7 +83,7 @@ def plot_multiple_humidity(sensors):
     """
     ax = plt.figure().gca()
     for sensor in sensors:
-        sensor.data.plot("time", "humidity", label="{} humidity".format(sensor.sensor_id), ax=ax)
+        sensor.data.plot(y="humidity", label="{} humidity".format(sensor.sensor_id), ax=ax)
         plt.ylabel("humidity (%)")
     plt.plot(plt.xlim(), [humidity_threshold, humidity_threshold], 'r--', label="PM sensor validity limit")
     plt.ylim([0, 100])
@@ -104,9 +104,9 @@ def plot_multiple_pm(sensors, pm10=True, pm2_5=True):
     ax = plt.figure().gca()
     for sensor in sensors:
         if pm10:
-            sensor.data.plot("time", "pm10", label="{} PM10".format(sensor.sensor_id), ax=ax)
+            sensor.data.plot(y="pm10", label="{} PM10".format(sensor.sensor_id), ax=ax)
         if pm2_5:
-            sensor.data.plot("time", "pm2_5", label="{} PM2.5".format(sensor.sensor_id), ax=ax)
+            sensor.data.plot(y="pm2_5", label="{} PM2.5".format(sensor.sensor_id), ax=ax)
         plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     if pm10:
         plt.plot(plt.xlim(), [50, 50], 'r--', label="PM10 24h limit")
@@ -125,7 +125,7 @@ def plot_multiple_temperature(sensors):
     """
     ax = plt.figure().gca()
     for sensor in sensors:
-        sensor.data.plot("time", "temperature", label="{} temperature".format(sensor.sensor_id), ax=ax)
+        sensor.data.plot(y="temperature", label="{} temperature".format(sensor.sensor_id), ax=ax)
         plt.ylabel(r"temperature ($\mathrm{\degree C}$)")
     plt.grid(axis='y')
     plt.legend()
@@ -140,30 +140,30 @@ def plot_pm(sensor, maxy=None):
 
     """
     # TODO: use resample instead
-    daily_data = sensor.groupby('d').mean().reset_index()
+    daily_data = sensor.data.resample('d').mean()
     high_humidity = sensor.data.humidity > humidity_threshold
 
     f, (a0, a1) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [1, 5]})
-    a0.plot(sensor.data.time, masked_where(1 - high_humidity, sensor.data.humidity), 'r', ms=1)
-    a0.plot(sensor.data.time, masked_where(high_humidity, sensor.data.humidity), 'b', ms=1)
-    highlight(sensor.data.time, high_humidity, a0)
+    a0.plot(sensor.data.index, masked_where(1 - high_humidity, sensor.data.humidity), 'r', ms=1)
+    a0.plot(sensor.data.index, masked_where(high_humidity, sensor.data.humidity), 'b', ms=1)
+    highlight(sensor.data.index, high_humidity, a0)
     a0.set_ylim([0, 100])
     a0.set_yticks([0, humidity_threshold, 100])
     a0.grid(axis='y')
     a0.set_ylabel("humidity (%)")
 
-    sensor.data.plot("time", "pm10", label="PM10 (avg={:.1f})".format(sensor.data.pm10.mean()), ax=a1)
-    sensor.data.plot("time", "pm2_5", label="PM2.5 (avg={:.1f})".format(sensor.data.pm2_5.mean()), ax=a1)
-    sensor.data.plot("time", "pm2_5_calib", label="PM2.5_calib (avg={:.1f})".format(sensor.data.pm2_5_calib.mean()), ax=a1)
-    daily_data.plot("time", "pm10", style='ro', label="daily PM10", ax=a1)
-    daily_data.plot("time", "pm2_5", style='ko', label="daily PM2.5", ax=a1)
-    a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]],
+    sensor.data.plot(y="pm10", label="PM10 (avg={:.1f})".format(sensor.data.pm10.mean()), ax=a1)
+    sensor.data.plot(y="pm2_5", label="PM2.5 (avg={:.1f})".format(sensor.data.pm2_5.mean()), ax=a1)
+    sensor.data.plot(y="pm2_5_calib", label="PM2.5_calib (avg={:.1f})".format(sensor.data.pm2_5_calib.mean()), ax=a1)
+    daily_data.plot(y="pm10", style='ro', label="daily PM10", ax=a1)
+    daily_data.plot(y="pm2_5", style='ko', label="daily PM2.5", ax=a1)
+    a1.plot([sensor.data.index[0], sensor.data.index[-1]],
         [pm10_daily_limit, pm10_daily_limit], 'r--', label="PM10 daily limit"
     )
-    a1.plot([sensor.data.time.iloc[0], sensor.data.time.iloc[-1]],
+    a1.plot([sensor.data.index[0], sensor.data.index[-1]],
         [pm2_5_yearly_limit, pm2_5_yearly_limit], 'k--', label="PM2.5 yearly limit"
     )
-    highlight(sensor.data.time, high_humidity, a1)
+    highlight(sensor.data.index, high_humidity, a1)
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
     plt.legend()
@@ -182,7 +182,7 @@ def plot_pm_ratio(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    sensor.data.plot("time", "pm10_per_pm2_5", label="PM10 / PM2.5")
+    sensor.data.plot(y="pm10_per_pm2_5", label="PM10 / PM2.5")
     plt.grid(axis='y')
     plt.legend()
     plt.title("Sensor ID: {}".format(sensor.sensor_id))
@@ -195,7 +195,7 @@ def plot_temperature(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    sensor.data.plot("time", "temperature")
+    sensor.data.plot(y="temperature")
     plt.ylabel(r"temperature ($\mathrm{\degree C}$)")
     plt.grid(axis='y')
     plt.title("Sensor ID: {}".format(sensor.sensor_id))
