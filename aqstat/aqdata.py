@@ -144,7 +144,3 @@ class AQData(object):
             location=location,
             data=data
         )
-
-    def sort(self, inplace=False):
-        """Sort data according to its datetime index."""
-        return self.data.sort_index(inplace=inplace)
