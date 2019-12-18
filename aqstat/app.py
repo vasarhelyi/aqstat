@@ -7,10 +7,12 @@ thing should be treated.
 """
 
 import click
+from datetime import datetime
 import logging
 import os
 import re
 from urllib.request import urlopen, urlretrieve
+import zipfile
 
 from .parse import parse_sensors_from_path
 from .plot import plot_daily_variation, plot_humidity, plot_multiple_pm, \
@@ -34,23 +36,37 @@ def main(verbose=False):
 
 
 @main.command()
-@click.argument("sensor_id", type=int)
+@click.argument("sensor-id", type=int)
 @click.argument("outputdir", type=click.Path(exists=True))
 def download(sensor_id, outputdir):
-    """Download luftdaten.info .csv files for a given sensor id to outputdir."""
+    """Download luftdaten.info .csv files for a given sensor id to outputdir
+        under a subdirectory named after sensor id.
+    """
 
-    # download all data
-    url = r"https://www.madavi.de/sensor/csvfiles.php?sensor=esp8266-{}".format(sensor_id).replace(" ","%20")
-    string = urlopen(url).read().decode('utf-8')
-    print(string)
-    csv_filelist = set(re.findall(r'data-esp8266-{}-....-..-..\.csv'.format(sensor_id), string))
-    zip_filelist = set(re.findall(r'data-esp8266-{}-....-..\.zip'.format(sensor_id), string))
-    print(csv_filelist)
-    print(zip_filelist)
-    for filename in csv_filelist:
-        urlretrieve(os.path.join(url, filename), outputdir)
-    # extract monthly .zip files
-    # TODO
+    baseurl = r"https://www.madavi.de/sensor/"
+
+    # get list of files to download
+    logging.info("Requesting list of files to download...")
+    url = r"{}csvfiles.php?sensor=esp8266-{}".format(baseurl, sensor_id)
+    html_string = urlopen(url).read().decode('utf-8')
+    print(html_string)
+    filelist = sorted(re.findall(r"href='(data_csv/.*/data-esp8266-[0-9]{0,12}-[0-9\-]{7,10}\.(?:zip|csv))'", html_string))
+    # remove today from files
+    # TODO: this will not be needed when rsync will be used, but how?
+    filelist = [x for x in filelist if str(datetime.today().date()) not in x]
+    # prepare output directory
+    outdir = os.path.join(outputdir, str(sensor_id))
+    os.makedirs(outdir, exist_ok=True)
+    # download files
+    for filename in filelist:
+        logging.info("Downloading {}".format(filename))
+        outfile = os.path.join(outdir, os.path.split(filename)[1])
+        if not os.path.exists(outfile):
+            urlretrieve(os.path.join(baseurl, filename), outfile)
+        if outfile.endswith(".zip"):
+            logging.info("Extracting {}".format(filename))
+            with zipfile.ZipFile(outfile, 'r') as zip_ref:
+                zip_ref.extractall(outdir)
 
 
 @main.command()
