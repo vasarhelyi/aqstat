@@ -8,27 +8,20 @@ thing should be treated.
 
 import click
 import logging
-from pathlib import Path
+import os
+import re
+from urllib.request import urlopen, urlretrieve
 
-from .aqdata import AQData
+from .parse import parse_sensors_from_path
 from .plot import plot_daily_variation, plot_humidity, plot_multiple_pm, \
     plot_multiple_humidity, plot_multiple_temperature, plot_pm, plot_pm_ratio, \
     plot_temperature, plot_pm_vs_humidity, plot_pm_vs_temperature
-from .utils import find_sensor_with_id
+
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="increase logging verbosity")
-@click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
-@click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
-@click.argument("inputdir", type=click.Path(exists=True))
-@click.pass_context
-def main(ctx, inputdir, date_start=None, date_end=None, verbose=False):
-    """Do all kinds of air quality related stuff from all .csv files in the
-    directory tree within INPUTDIR."""
-
-    # ensure that ctx.obj exists and is a dict (in case `main()` is called
-    # by means other than the __main__ == "__name__" block at the bottom
-    ctx.ensure_object(dict)
+def main(verbose=False):
+    """Do all kinds of air quality related stuff."""
 
     # setup logging
     if verbose > 1:
@@ -38,40 +31,55 @@ def main(ctx, inputdir, date_start=None, date_end=None, verbose=False):
     else:
         log_level = logging.WARN
     logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
-    # parse all data separated according to sensors
-    sensors = []
-    for filename in sorted(Path(inputdir).glob("**/*.csv")):
-        logging.info("Parsing {}".format(filename))
-        newsensor = AQData.from_csv(filename, date_start=date_start,
-            date_end=date_end
-        )
-        i = find_sensor_with_id(sensors, newsensor.sensor_id)
-        if i is None:
-            sensors.append(AQData())
-            i = -1
-        sensors[i].merge(newsensor, inplace=True)
-    # perform calibration on sensor data
-    for sensor in sensors:
-        sensor.calibrate()
 
-    # save sensors into the context
-    ctx.obj['sensors'] = sensors
 
 @main.command()
+@click.argument("sensor_id", type=int)
+@click.argument("outputdir", type=click.Path(exists=True))
+def download(sensor_id, outputdir):
+    """Download luftdaten.info .csv files for a given sensor id to outputdir."""
+
+    # download all data
+    url = r"https://www.madavi.de/sensor/csvfiles.php?sensor=esp8266-{}".format(sensor_id).replace(" ","%20")
+    string = urlopen(url).read().decode('utf-8')
+    print(string)
+    csv_filelist = set(re.findall(r'data-esp8266-{}-....-..-..\.csv'.format(sensor_id), string))
+    zip_filelist = set(re.findall(r'data-esp8266-{}-....-..\.zip'.format(sensor_id), string))
+    print(csv_filelist)
+    print(zip_filelist)
+    for filename in csv_filelist:
+        urlretrieve(os.path.join(url, filename), outputdir)
+    # extract monthly .zip files
+    # TODO
+
+
+@main.command()
+@click.argument("inputdir", type=click.Path(exists=True))
+@click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
+@click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
 @click.option("-p", "--particle", is_flag=True, help="plot PM data")
 @click.option("-h", "--humidity", is_flag=True, help="plot humidity data")
 @click.option("-t", "--temperature", is_flag=True, help="plot temperature data")
 @click.option("-mp", "--multiple-particle", is_flag=True, help="plot multiple PM data")
 @click.option("-mh", "--multiple-humidity", is_flag=True, help="plot multiple humidity data")
 @click.option("-mt", "--multiple-temperature", is_flag=True, help="plot multiple temperature data")
-@click.pass_context
-def plot(ctx, particle=False, humidity=False, temperature=False,
-    multiple_particle=False, multiple_humidity=False, multiple_temperature=False):
-    """Plot AQ data in various ways."""
+#@click.pass_context
+def plot(inputdir, date_start=None, date_end=None, particle=False,
+    humidity=False, temperature=False, multiple_particle=False,
+    multiple_humidity=False, multiple_temperature=False):
+    """Plot AQ data in various ways from all .csv files in the
+    directory tree within INPUTDIR.
+    """
+
+    # parse sensors from files
+    sensors = parse_sensors_from_path(inputdir, date_start, date_end)
+    # perform calibration on sensor data
+    for sensor in sensors:
+        sensor.calibrate()
+
     # if no specific argument is given, plot everything
     all = not (particle or humidity or temperature or
         multiple_particle or multiple_humidity or multiple_temperature)
-    sensors = ctx.obj['sensors']
 
     # plot individual sensor data
     for sensor in sensors:
@@ -105,14 +113,17 @@ def plot(ctx, particle=False, humidity=False, temperature=False,
 
 @main.command()
 @click.pass_context
-def test(ctx):
+def test():
     """Arbitrary tests on AQ data."""
 
     # import some things we need only here
     from .utils import consecutive_pairs
 
-    # get the sensor data from the context
-    sensors = ctx.obj['sensors']
+    # parse sensors from files
+    sensors = parse_sensors_from_path(inputdir, date_start, date_end)
+    # perform calibration on sensor data
+    for sensor in sensors:
+        sensor.calibrate()
 
     # print correlation between datasets
     for a, b in consecutive_pairs(sensors):
@@ -120,4 +131,4 @@ def test(ctx):
 
 
 if __name__ == '__main__':
-    main(obj={})
+    main()
