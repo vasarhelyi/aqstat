@@ -69,4 +69,3 @@ def download(outputdir, sensor_ids=""):
                 logging.info("Extracting {}".format(filename))
                 with zipfile.ZipFile(outfile, 'r') as zip_ref:
                     zip_ref.extractall(outdir)
-        print(r.headers)
