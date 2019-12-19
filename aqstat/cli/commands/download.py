@@ -46,21 +46,27 @@ def download(outputdir, sensor_ids=""):
             r"href='(data_csv/.*/data-esp8266-[0-9]{0,12}-[0-9\-]{7,10}\.(?:zip|csv))'",
             html_string
         ))
-        # remove today from files
-        # TODO: this will not be needed when rsync will be used, but how?
-        #filelist = [x for x in filelist if str(datetime.today().date()) not in x]
         # prepare output directory
         outdir = os.path.join(outputdir, str(sensor_id))
         os.makedirs(outdir, exist_ok=True)
-        # download files
+        # download files (only if size differs from local)
         for filename in filelist:
+            url = os.path.join(baseurl, filename)
             outfile = os.path.join(outdir, os.path.split(filename)[1])
+            logging.info("Checking {}".format(filename))
+            r = requests.get(url, stream=True)
+            # TODO: compare current and cached ETag values instead of size
+            #       hint: https://pypi.org/project/requests-etag-cache/
             if os.path.exists(outfile):
-                continue
-            with requests.get(os.path.join(baseurl, filename)) as r, open(outfile, "wb") as f:
+                remote_size = int(r.headers["Content-Length"])
+                local_size = int(os.stat(outfile).st_size)
+                if local_size == remote_size:
+                    continue
+            with open(outfile, "wb") as f:
                 logging.info("Downloading {}".format(filename))
                 f.write(r.content)
             if outfile.endswith(".zip"):
                 logging.info("Extracting {}".format(filename))
                 with zipfile.ZipFile(outfile, 'r') as zip_ref:
                     zip_ref.extractall(outdir)
+        print(r.headers)
