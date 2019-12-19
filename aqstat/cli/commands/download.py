@@ -5,7 +5,7 @@ from datetime import datetime
 import logging
 import os
 import re
-from urllib.request import urlopen, urlretrieve
+import requests
 import zipfile
 
 # TODO: text wrapping is bad in click for --help, docsctring is ugly
@@ -41,14 +41,14 @@ def download(outputdir, sensor_ids=""):
         # get list of files to download
         logging.info("Requesting list of files to download for sensor id {}".format(sensor_id))
         url = r"{}csvfiles.php?sensor=esp8266-{}".format(baseurl, sensor_id)
-        html_string = urlopen(url).read().decode('utf-8')
+        html_string = requests.get(url).text
         filelist = sorted(re.findall(
             r"href='(data_csv/.*/data-esp8266-[0-9]{0,12}-[0-9\-]{7,10}\.(?:zip|csv))'",
             html_string
         ))
         # remove today from files
         # TODO: this will not be needed when rsync will be used, but how?
-        filelist = [x for x in filelist if str(datetime.today().date()) not in x]
+        #filelist = [x for x in filelist if str(datetime.today().date()) not in x]
         # prepare output directory
         outdir = os.path.join(outputdir, str(sensor_id))
         os.makedirs(outdir, exist_ok=True)
@@ -57,8 +57,9 @@ def download(outputdir, sensor_ids=""):
             outfile = os.path.join(outdir, os.path.split(filename)[1])
             if os.path.exists(outfile):
                 continue
-            logging.info("Downloading {}".format(filename))
-            urlretrieve(os.path.join(baseurl, filename), outfile)
+            with requests.get(os.path.join(baseurl, filename)) as r, open(outfile, "wb") as f:
+                logging.info("Downloading {}".format(filename))
+                f.write(r.content)
             if outfile.endswith(".zip"):
                 logging.info("Extracting {}".format(filename))
                 with zipfile.ZipFile(outfile, 'r') as zip_ref:
