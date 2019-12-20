@@ -8,31 +8,24 @@ import re
 import requests
 import zipfile
 
-# TODO: text wrapping is bad in click for --help, docsctring is ugly
 @click.command()
 @click.argument("outputdir", type=click.Path(exists=True))
 @click.argument("sensor-ids", required=False)
 def download(outputdir, sensor_ids=""):
-    """Download luftdaten.info .csv files for a given sensor id to outputdir.
+    """Download luftdaten.info .csv files for the given SENSOR_IDS to OUTPUTDIR.
 
-    Parameters:
-        outputdir (Path): the path where data is to be downloaded, organized
-            into subdirectories named after sensor IDs.
-        sensor_ids (str): comma separated list of sensor IDs used for download.
-            If empty, IDs will be inferred from directory names under 'outputdir'
+    Data is assumed to be and will be organized into subdirectories named
+    after SENSOR_IDS.
+
+    SENSOR_IDS should be a comma separated list of integers.
+    If no SENSOR_IDS are given, they will be inferred from directory names
+    under OUTPUTDIR.
 
     """
     # define download source
     baseurl = r"https://www.madavi.de/sensor/"
-
-    # get list of sensor IDs from option
-    if sensor_ids:
-        sensor_ids = [int(x) for x in sensor_ids.split(",") if x.isdigit()]
-    # or from subdirectory names
-    else:
-        sensor_ids = [int(x) for x in os.listdir(outputdir) if os.path.isdir(
-            os.path.join(outputdir, x)) and x.isdigit()
-        ]
+    # get list of sensor IDs from option or from subdirectory names
+    sensor_ids = parse_sensor_ids_from_string_or_dir(sensor_ids, outputdir)
     if not sensor_ids:
         logging.warn("No valid sensor IDs are provided. Exiting.")
         return

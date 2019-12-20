@@ -1,7 +1,7 @@
 """Parsing functions for AQData classes."""
 
 import logging
-from os.path import basename
+import os
 from pandas import read_csv
 from pathlib import Path
 
@@ -17,7 +17,7 @@ def parse_id_from_luftdaten_csv(filename):
         int: sensor id or None in case of format error.
 
     """
-    tokens = basename(filename).split("-")
+    tokens = os.path.basename(filename).split("-")
     if len(tokens) == 6 and tokens[0] == "data" and tokens[1] == "esp8266":
         return int(tokens[2])
 
@@ -40,12 +40,15 @@ def parse_luftdaten_csv(filename):
     return read_csv(filename, sep=";", parse_dates=[0], index_col=0,
         infer_datetime_format=True, skipinitialspace=True)
 
-def parse_sensors_from_path(inputdir, date_start=None, date_end=None):
+def parse_sensors_from_path(inputdir, sensor_ids=None, date_start=None,
+    date_end=None):
     """Parse all sensor data in the given period from inputdir.
 
     Parameters:
         inputdir (Path): the path where sensor data is found, organized in
             directories according to sensor id.
+        sensor_ids (list): list of sensor_ids to be parsed.
+            If None or empty, use all sensor ids found.
         date_start (datetime): starting date limit or None if not used
         date_end (datetime): ending date limit or None if not used
 
@@ -60,10 +63,17 @@ def parse_sensors_from_path(inputdir, date_start=None, date_end=None):
     # parse all data separated according to sensors
     sensors = []
     for filename in sorted(Path(inputdir).glob("**/*.csv")):
+        # skip sensor id if needed
+        if sensor_ids:
+            sensor_id = parse_id_from_luftdaten_csv(filename)
+            if sensor_id not in sensor_ids:
+                continue
+        # parse sensor file
         logging.info("Parsing {}".format(filename))
         newsensor = AQData.from_csv(filename, date_start=date_start,
             date_end=date_end
         )
+        # add current sensor data to existing list
         i = find_sensor_with_id(sensors, newsensor.sensor_id)
         if i is None:
             sensors.append(AQData())
@@ -71,3 +81,34 @@ def parse_sensors_from_path(inputdir, date_start=None, date_end=None):
         sensors[i].merge(newsensor, inplace=True)
 
     return [s for s in sensors if not s.data.empty]
+
+def parse_sensor_ids_from_string_or_dir(string=None, path=None):
+    """Parse sensor ids from a comma separated list or from subdirectory names
+    at a given path.
+
+    Parameters:
+        string (str): a comma separated list of ids
+        path (Path): an existing path under which first level integer
+            subdirectory names will be parsed as sensor ids
+
+    Return:
+        list of sensor ids found
+
+    """
+
+    # get list of sensor IDs from string
+    if string:
+        sensor_ids = [int(x) for x in string.split(",") if x.isdigit()]
+        if not sensor_ids:
+            logging.warn("No valid sensor ids could be parsed from string '{}'".format(string))
+    # or from dir
+    elif path:
+        sensor_ids = [int(x) for x in os.listdir(path) if os.path.isdir(
+            os.path.join(path, x)) and x.isdigit()
+        ]
+        if not sensor_ids:
+            logging.warn("No valid sensor ids could be parsed from path '{}'".format(path))
+    else:
+        sensor_ids = []
+
+    return sensor_ids
