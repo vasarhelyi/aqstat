@@ -75,7 +75,23 @@ def plot_humidity(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    sensor.data.plot(y="humidity")
+    # plot time series
+    sensor.data.plot(y="humidity", label="humidity (avg={:.1f})".format(
+        sensor.data.humidity.mean())
+    )
+    # add min label
+    minvalue = sensor.data.humidity.min()
+    idxmin = sensor.data.humidity.idxmin()
+    plt.text(idxmin, minvalue, "{:.1f} %".format(minvalue),
+        ha="center", va="top"
+    )
+    # add max label
+    maxvalue = sensor.data.humidity.max()
+    idxmax = sensor.data.humidity.idxmax()
+    plt.text(idxmax, maxvalue, "{:.1f} %".format(maxvalue),
+        ha="center", va="bottom"
+    )
+    # setup additional stuff
     plt.ylabel("humidity (%)")
     plt.grid(axis='y')
     plt.title("Sensor ID: {}".format(sensor.sensor_id))
@@ -207,9 +223,29 @@ def plot_temperature(sensor):
         sensor (AQData): the sensor containing the dataset to plot
 
     """
-    sensor.data.plot(y="temperature")
+
+    # plot time series
+    sensor.data.plot(y="temperature", label="temperature (avg={:.1f})".format(
+        sensor.data.temperature.mean())
+    )
+    # add min label
+    minvalue = sensor.data.temperature.min()
+    idxmin = sensor.data.temperature.idxmin()
+    plt.text(idxmin, minvalue, "{:.1f}$\mathrm{{\degree C}}$".format(minvalue),
+        ha="center", va="top"
+    )
+    # add max label
+    maxvalue = sensor.data.temperature.max()
+    idxmax = sensor.data.temperature.idxmax()
+    plt.text(idxmax, maxvalue, "{:.1f}$\mathrm{{\degree C}}$".format(maxvalue),
+        ha="center", va="bottom"
+    )
+    # setup additional stuff
     plt.ylabel(r"temperature ($\mathrm{\degree C}$)")
     plt.grid(axis='y')
+    ylim = plt.ylim()
+    if ylim[0] < 0 and ylim[1] > 0:
+        plt.plot(plt.xlim(), [0, 0], "db--")
     plt.title("Sensor ID: {}".format(sensor.sensor_id))
     plt.show()
 
