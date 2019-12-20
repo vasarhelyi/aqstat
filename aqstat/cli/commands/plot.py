@@ -1,6 +1,7 @@
 """Implementation of the 'plot' command for AQstat."""
 
 import click
+import logging
 
 from aqstat.plot import plot_daily_variation, plot_humidity, plot_multiple_pm, \
     plot_multiple_humidity, plot_multiple_temperature, plot_pm, plot_pm_ratio, \
@@ -39,21 +40,28 @@ def plot(inputdir, date_start=None, date_end=None, particle=False,
     for sensor in sensors:
         # plot PM data
         if all or particle:
-            plot_pm(sensor, maxy=300)
-            plot_pm_ratio(sensor)
-            plot_daily_variation(sensor, ["pm10", "pm2_5", "pm2_5_calib"])
+            if sensor.data.pm10.count() or sensor.data.pm2_5.count():
+                plot_pm(sensor, maxy=300)
+                plot_pm_ratio(sensor)
+                plot_daily_variation(sensor, ["pm10", "pm2_5", "pm2_5_calib"])
+            else:
+                logging.warn("No valid PM data for sensor id {}".format(sensor.sensor_id))
         # plot temperature date
         if all or temperature:
-            plot_temperature(sensor)
-            # plot pm vs temperature data
-            plot_pm_vs_temperature(sensor)
-            plot_daily_variation(sensor, ["temperature"])
+            if sensor.data.temperature.count():
+                plot_temperature(sensor)
+                plot_pm_vs_temperature(sensor)
+                plot_daily_variation(sensor, ["temperature"])
+            else:
+                logging.warn("No valid temperature data for sensor id {}".format(sensor.sensor_id))
         # plot humidity data
         if all or humidity:
-            plot_humidity(sensor)
-            # plot pm vs humidity data
-            plot_pm_vs_humidity(sensor)
-            plot_daily_variation(sensor, ["humidity"])
+            if sensor.data.humidity.count():
+                plot_humidity(sensor)
+                plot_pm_vs_humidity(sensor)
+                plot_daily_variation(sensor, ["humidity"])
+            else:
+                logging.warn("No valid humidity data for sensor id {}".format(sensor.sensor_id))
 
     # plot multiple sensor data
     if len(sensors) > 1:
