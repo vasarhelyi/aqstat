@@ -8,6 +8,8 @@ import re
 import requests
 import zipfile
 
+from aqstat.parse import parse_sensor_ids_from_string_or_dir
+
 @click.command()
 @click.argument("outputdir", type=click.Path(exists=True))
 @click.argument("sensor-ids", required=False)

@@ -3,14 +3,15 @@
 import click
 from itertools import combinations
 
-from aqstat.parse import parse_sensors_from_path
+from aqstat.parse import parse_sensor_ids_from_string_or_dir, \
+    parse_sensors_from_path
 
 @click.command()
 @click.argument("inputdir", type=click.Path(exists=True))
 @click.argument("sensor-ids", required=False)
 @click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
-def test(inputdir, date_start=None, date_end=None):
+def test(inputdir, sensor_ids=None, date_start=None, date_end=None):
     """Arbitrary tests on AQ data in INPUTDIR for sensors in SENSOR_IDS.
 
     SENSOR_IDS should be a comma separated list of integers.

@@ -6,7 +6,9 @@ import logging
 from aqstat.plot import plot_daily_variation, plot_humidity, plot_multiple_pm, \
     plot_multiple_humidity, plot_multiple_temperature, plot_pm, plot_pm_ratio, \
     plot_temperature, plot_pm_vs_humidity, plot_pm_vs_temperature
-from aqstat.parse import parse_sensors_from_path
+from aqstat.parse import parse_sensor_ids_from_string_or_dir, \
+    parse_sensors_from_path
+
 
 
 @click.command()
