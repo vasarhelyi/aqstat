@@ -70,4 +70,4 @@ def parse_sensors_from_path(inputdir, date_start=None, date_end=None):
             i = -1
         sensors[i].merge(newsensor, inplace=True)
 
-    return sensors
+    return [s for s in sensors if not s.data.empty]
