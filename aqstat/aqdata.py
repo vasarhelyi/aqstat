@@ -77,12 +77,9 @@ class AQData(object):
         )
         # calculate correlation
         result = self.data.corrwith(other=other_matched, method=method, drop=True)
-        # add number of valid values that were compared to the output
-        # TODO: this is not accurate if there are individual NaN-s in a or b
-        #       in some columns only...
-        result["count"] = other_matched.dropna().shape[0]
-
-        return result
+        # calculate number of not-NaNs for each column
+        counts = (self.data + other_matched).count()
+        return DataFrame({method: result, "count": counts})
 
     @classmethod
     def from_csv(self, filename, date_start=None, date_end=None):
