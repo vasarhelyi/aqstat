@@ -1,6 +1,7 @@
 """This script contains plotting functions for AQData classes."""
 
 import logging
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from numpy.ma import masked_where
@@ -266,6 +267,58 @@ def plot_pm_vs_humidity(sensor):
         "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.humidity)[0])
     ]))
     plt.grid()
+    plt.show()
+
+def plot_pm_vs_humidity_hist(sensor):
+    """Plot PM vs humidity data as a binned histogram.
+
+    Parameters:
+        sensor (AQData): the sensor containing the dataset to plot
+
+    """
+    # PM10 vs Humidity heatmap
+    fig, axs = plt.subplots(2, 2, sharex=False, sharey=False, gridspec_kw={
+        'height_ratios': [1, 5],
+        'width_ratios': [5, 1]
+    })
+    # main 2d histogram
+    cmap = plt.cm.jet
+    cmap.set_bad(color="black")
+    axs[1, 0].hist2d(sensor.data.humidity, sensor.data.pm10, bins=(20, 24),
+        range=[[0, 100], [0, 300]], cmap=cmap, norm=mpl.colors.LogNorm())
+    for label in [x for x in pm_limits if x.startswith("PM10")]:
+        axs[1, 0].plot(axs[1, 0].get_xlim(), [pm_limits[label][0]]*2,
+            linestyle="--", color=pm_limits[label][1], label=label
+        )
+    #plt.colorbar() # TODO: this does not work yet...
+    axs[1, 0].set_xlabel("humidity (%)")
+    axs[1, 0].set_ylabel(r"PM10 concentration ($\mathrm{\mu g/m^3}$)")
+    # 1d histogram of humidity at the top
+    axs[0, 0].hist(sensor.data.humidity, bins=20, range=[0, 100],
+        histtype="step")
+    axs[0, 0].set_xlim([0, 100])
+    axs[0, 0].get_xaxis().set_visible(False)
+    axs[0, 0].set_ylabel("count")
+    # 1d histogram of pollution at the right
+    axs[1, 1].hist(sensor.data.pm10, bins=24, range=[0, 300],
+        histtype="step", orientation="horizontal")
+    for label in [x for x in pm_limits if x.startswith("PM10")]:
+        axs[1, 1].plot(axs[1, 1].get_xlim(), [pm_limits[label][0]]*2,
+            linestyle="--", color=pm_limits[label][1], label=label
+        )
+    axs[1, 1].set_ylim([0, 300])
+    axs[1, 1].get_yaxis().set_visible(False)
+    axs[1, 1].set_xlabel("count")
+    # legend in remaining subplot
+    handles, labels = axs[1, 0].get_legend_handles_labels()
+    axs[0, 1].legend(handles, labels, loc="center")
+    # empty the rest of the plot
+    axs[0, 1].axis("off")
+    # global stuff
+    plt.suptitle("\n".join([
+        "Sensor ID: {}".format(sensor.sensor_id),
+        "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.humidity)[0])
+    ]))
     plt.show()
 
 def plot_pm_vs_temperature(sensor):
