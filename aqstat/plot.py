@@ -3,6 +3,7 @@
 import logging
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 
 from numpy.ma import masked_where
 from pandas.plotting import register_matplotlib_converters
@@ -275,46 +276,92 @@ def plot_pm_vs_humidity_hist(sensor):
     Parameters:
         sensor (AQData): the sensor containing the dataset to plot
 
+    Note that in the historgrams we assume that the weight of each measurement
+    is the same, even if the time difference between them is different,
+    i.e., all data points correspond to the same inner time-averaging period.
+
     """
-    # PM10 vs Humidity heatmap
+    # PM10 vs Humidity heatmap subplots
     fig, axs = plt.subplots(2, 2, sharex=False, sharey=False, gridspec_kw={
         'height_ratios': [1, 5],
         'width_ratios': [5, 1]
     })
-    # main 2d histogram
+    plt.subplots_adjust(left=0.1, right=0.9, wspace=0.08, hspace=0.08)
+    ax_main = axs[1, 0]
+    ax_right = axs[1, 1]
+    ax_top = axs[0, 0]
+    ax_empty = axs[0, 1]
+    print(ax_main.get_position())
+
+    ############################################################################
+    # main 2d histogram in the center
+
+    # create colormap
     cmap = plt.cm.jet
     cmap.set_bad(color="black")
-    axs[1, 0].hist2d(sensor.data.humidity, sensor.data.pm10, bins=(20, 24),
+    # create histogram
+    hist, xbins, ybins, im = ax_main.hist2d(
+        sensor.data.humidity, sensor.data.pm10, bins=(20, 24),
         range=[[0, 100], [0, 300]], cmap=cmap, norm=mpl.colors.LogNorm())
+    # show data as text in the center of bins
+    for j in range(len(ybins) - 1):
+        for i in range(len(xbins) - 1):
+            if hist[i, j]:
+                ax_main.text(xbins[i] + 2.5, ybins[j] + 5, int(hist[i, j]),
+                    ha="center", va="center", fontsize=7
+            )
+    # plot health limits
     for label in [x for x in pm_limits if x.startswith("PM10")]:
-        axs[1, 0].plot(axs[1, 0].get_xlim(), [pm_limits[label][0]]*2,
+        ax_main.plot(ax_main.get_xlim(), [pm_limits[label][0]]*2,
             linestyle="--", color=pm_limits[label][1], label=label
         )
-    #plt.colorbar() # TODO: this does not work yet...
-    axs[1, 0].set_xlabel("humidity (%)")
-    axs[1, 0].set_ylabel(r"PM10 concentration ($\mathrm{\mu g/m^3}$)")
+    # place colorbar
+    bottom = ax_main.get_position().y0
+    height = ax_top.get_position().y1 - bottom
+    cbaxes = fig.add_axes([0.92, bottom, 0.02, height])
+    fig.colorbar(im, cax=cbaxes, label="number of measurements")
+    # arbitrary texts
+    ax_main.set_xlabel("humidity (%)")
+    ax_main.set_ylabel(r"PM10 concentration ($\mathrm{\mu g/m^3}$)")
+    ax_main.legend(loc="upper left")
+
+    ############################################################################
     # 1d histogram of humidity at the top
-    axs[0, 0].hist(sensor.data.humidity, bins=20, range=[0, 100],
-        histtype="step")
-    axs[0, 0].set_xlim([0, 100])
-    axs[0, 0].get_xaxis().set_visible(False)
-    axs[0, 0].set_ylabel("count")
+
+    ax_top.hist(sensor.data.humidity, bins=20, range=[0, 100],
+        histtype="step",
+        weights=np.ones(len(sensor.data.humidity)) / len(sensor.data.humidity)
+    )
+    ax_top.set_xlim([0, 100])
+    ax_top.get_xaxis().set_visible(False)
+    ax_top.set_ylabel("percent")
+    ax_top.grid()
+    ax_top.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1))
+    # adjust bounding box of top plot to be consistent with main plot
+    # as colorbar messes default up
+    bb = ax_top.get_position()
+    bb.x1 = ax_main.get_position().x1
+    ax_top.set_position(bb)
+
+    ############################################################################
     # 1d histogram of pollution at the right
-    axs[1, 1].hist(sensor.data.pm10, bins=24, range=[0, 300],
-        histtype="step", orientation="horizontal")
+    ax_right.hist(sensor.data.pm10, bins=24, range=[0, 300],
+        histtype="step", orientation="horizontal",
+        weights=np.ones(len(sensor.data.pm10)) / len(sensor.data.pm10))
     for label in [x for x in pm_limits if x.startswith("PM10")]:
-        axs[1, 1].plot(axs[1, 1].get_xlim(), [pm_limits[label][0]]*2,
+        ax_right.plot(ax_right.get_xlim(), [pm_limits[label][0]]*2,
             linestyle="--", color=pm_limits[label][1], label=label
         )
-    axs[1, 1].set_ylim([0, 300])
-    axs[1, 1].get_yaxis().set_visible(False)
-    axs[1, 1].set_xlabel("count")
-    # legend in remaining subplot
-    handles, labels = axs[1, 0].get_legend_handles_labels()
-    axs[0, 1].legend(handles, labels, loc="center")
-    # empty the rest of the plot
-    axs[0, 1].axis("off")
+    ax_right.set_ylim([0, 300])
+    ax_right.get_yaxis().set_visible(False)
+    ax_right.set_xlabel("percent")
+    ax_right.grid()
+    ax_right.xaxis.set_major_formatter(mpl.ticker.PercentFormatter(1))
+
+    ############################################################################
     # global stuff
+
+    ax_empty.axis("off")
     plt.suptitle("\n".join([
         "Sensor ID: {}".format(sensor.sensor_id),
         "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.humidity)[0])
