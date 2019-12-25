@@ -1,7 +1,6 @@
 """Implementation of the 'download' command for AQstat."""
 
 import click
-from datetime import datetime
 import logging
 import os
 import re
@@ -44,17 +43,24 @@ def download(outputdir, sensor_ids=""):
         # prepare output directory
         outdir = os.path.join(outputdir, str(sensor_id))
         os.makedirs(outdir, exist_ok=True)
-        # download files (only if not existing or today's is newer)
+        # download files (only if size differs from local)
         for filename in filelist:
-            outfile = os.path.join(outdir, os.path.split(filename)[1])
-            # we skip existing older files and download today's again as it
-            # might be newer since last download
-            if os.path.exists(outfile) and str(datetime.today().date()) not in filename:
-                continue
             url = os.path.join(baseurl, filename)
-            r = requests.get(url)
-            with open(outfile, "wb") as f:
+            outfile = os.path.join(outdir, os.path.split(filename)[1])
+            r = requests.get(url, stream=True)
+            # TODO: compare current and cached ETag values instead of size
+            #       hint: https://pypi.org/project/requests-etag-cache/
+            if os.path.exists(outfile):
+                remote_size = int(r.headers["Content-Length"])
+                local_size = int(os.stat(outfile).st_size)
+                if local_size == remote_size:
+                    logging.info("Skipping {}".format(filename))
+                    continue
+                else:
+                    logging.info("Updating {}".format(filename))
+            else:
                 logging.info("Downloading {}".format(filename))
+            with open(outfile, "wb") as f:
                 f.write(r.content)
             if outfile.endswith(".zip"):
                 logging.info("Extracting {}".format(filename))
