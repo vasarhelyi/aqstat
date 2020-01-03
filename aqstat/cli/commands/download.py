@@ -61,7 +61,8 @@ def download(outputdir, sensor_ids=""):
             else:
                 logging.info("Downloading {}".format(filename))
             with open(outfile, "wb") as f:
-                f.write(r.content)
+                for chunk in r:
+                    f.write(chunk)
             if outfile.endswith(".zip"):
                 logging.info("Extracting {}".format(filename))
                 with zipfile.ZipFile(outfile, 'r') as zip_ref:

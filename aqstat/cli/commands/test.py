@@ -27,10 +27,17 @@ def test(inputdir, sensor_ids=None, date_start=None, date_end=None):
     for sensor in sensors:
         sensor.calibrate()
 
-    # print correlation between datasets
-    for a, b in combinations(sensors, 2):
-        print()
-        print("Correlations between sensor ids {} and {}".format(
-            a.sensor_id, b.sensor_id)
-        )
-        print(a.corrwith(b, tolerance=60))
+#     # print correlation between datasets
+#     for a, b in combinations(sensors, 2):
+#         print()
+#         print("Correlations between sensor ids {} and {}".format(
+#             a.sensor_id, b.sensor_id)
+#         )
+#         print(a.corrwith(b, tolerance=60))
+
+    # print main frequencies
+    for sensor in sensors:
+        df = sensor.data.index.to_series().diff()
+        print("sensor_id\tmin\tmax\mean\tmedian")
+        print("\t".join(map(str, [sensor.sensor_id, df.min(), df.max(), df.mean(), df.median()])))
+
