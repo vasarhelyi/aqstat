@@ -5,7 +5,7 @@ import logging
 
 from aqstat.plot import plot_daily_variation, plot_humidity, plot_multiple_pm, \
     plot_multiple_humidity, plot_multiple_temperature, plot_pm, plot_pm_ratio, \
-    plot_temperature, plot_pm_vs_humidity, plot_pm_vs_humidity_hist, \
+    plot_temperature, plot_pm_vs_environment_hist, plot_pm_vs_humidity, \
     plot_pm_vs_temperature
 from aqstat.parse import parse_sensor_ids_from_string_or_dir, \
     parse_sensors_from_path
@@ -61,6 +61,7 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
             if sensor.data.temperature.count():
                 plot_temperature(sensor)
                 plot_pm_vs_temperature(sensor)
+                plot_pm_vs_environment_hist(sensor, xtype="temperature")
                 plot_daily_variation(sensor, ["temperature"])
             else:
                 logging.warn("No valid temperature data for sensor id {}".format(sensor.sensor_id))
@@ -69,7 +70,7 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
             if sensor.data.humidity.count():
                 plot_humidity(sensor)
                 plot_pm_vs_humidity(sensor)
-                plot_pm_vs_humidity_hist(sensor)
+                plot_pm_vs_environment_hist(sensor, xtype="humidity")
                 plot_daily_variation(sensor, ["humidity"])
             else:
                 logging.warn("No valid humidity data for sensor id {}".format(sensor.sensor_id))

@@ -23,6 +23,14 @@ pm_limits = {
     "PM10 daily emergency limit": (100, "black"),
 }
 
+# feasible measurement ranges for each sensor type
+sensor_ranges = {
+    "humidity": [0, 100],
+    "temperature": [-15, 35],
+    "pm10": [0, 300],
+    "pm2_5": [0, 100]
+}
+
 def highlight(x, condition, ax):
     """Highlight plot at the given indices.
 
@@ -65,6 +73,7 @@ def plot_daily_variation(sensor, keys):
         data2 = (sensor.data[key] - daily_average).groupby(sensor.data.index.hour).agg(["mean", "std"])
         plt.errorbar(x=data1.index + i * 0.1, y=data1["mean"], yerr=data1["std"], label="{} - avg({:.1f})".format(key, total_average))
         plt.errorbar(x=data2.index + i * 0.1, y=data2["mean"], yerr=data2["std"], label="{} - daily_avg".format(key))
+    plt.grid(axis='y')
     plt.xlabel("hours of day")
     plt.ylabel("daily variation")
     plt.legend()
@@ -270,19 +279,20 @@ def plot_pm_vs_humidity(sensor):
     plt.grid()
     plt.show()
 
-def plot_pm_vs_humidity_hist(sensor):
-    """Plot PM vs humidity data as a binned histogram.
+def plot_pm_vs_environment_hist(sensor, xtype="humidity"):
+    """Plot PM vs humidity/temperature data as a binned histogram.
 
     Parameters:
         sensor (AQData): the sensor containing the dataset to plot
+        xtype (str): humidity or temperature on x axis
 
     Note that in the historgrams we assume that the weight of each measurement
     is the same, even if the time difference between them is different,
     i.e., all data points correspond to the same inner time-averaging period.
 
     """
-    # PM10 vs Humidity heatmap subplots
-    fig, axs = plt.subplots(2, 2, sharex=False, sharey=False, gridspec_kw={
+    # PM10 vs Humidity/temperature heatmap subplots
+    fig, axs = plt.subplots(2, 2, gridspec_kw={
         'height_ratios': [1, 5],
         'width_ratios': [5, 1]
     })
@@ -291,7 +301,13 @@ def plot_pm_vs_humidity_hist(sensor):
     ax_right = axs[1, 1]
     ax_top = axs[0, 0]
     ax_empty = axs[0, 1]
-    print(ax_main.get_position())
+
+    if xtype == "humidity":
+        xdata = sensor.data.humidity
+        xlabel = "humidity (%)"
+    elif xtype == "temperature":
+        xdata = sensor.data.temperature
+        xlabel = r"temperature ($\mathrm{\degree C}$)"
 
     ############################################################################
     # main 2d histogram in the center
@@ -301,13 +317,15 @@ def plot_pm_vs_humidity_hist(sensor):
     cmap.set_bad(color="black")
     # create histogram
     hist, xbins, ybins, im = ax_main.hist2d(
-        sensor.data.humidity, sensor.data.pm10, bins=(20, 24),
-        range=[[0, 100], [0, 300]], cmap=cmap, norm=mpl.colors.LogNorm())
+        xdata, sensor.data.pm10, bins=(20, 24),
+        range=[sensor_ranges[xtype], [0, 300]], cmap=cmap, norm=mpl.colors.LogNorm())
     # show data as text in the center of bins
+    dx = (xbins[1] - xbins[0]) / 2
+    dy = (ybins[1] - ybins[0]) / 2 - 1.5 # TODO: why va='center' does not work?
     for j in range(len(ybins) - 1):
         for i in range(len(xbins) - 1):
             if hist[i, j]:
-                ax_main.text(xbins[i] + 2.5, ybins[j] + 5, int(hist[i, j]),
+                ax_main.text(xbins[i] + dx, ybins[j] + dy, int(hist[i, j]),
                     ha="center", va="center", fontsize=7
             )
     # plot health limits
@@ -315,24 +333,28 @@ def plot_pm_vs_humidity_hist(sensor):
         ax_main.plot(ax_main.get_xlim(), [pm_limits[label][0]]*2,
             linestyle="--", color=pm_limits[label][1], label=label
         )
+    # plot pm10 humidity working limit
+    if xtype == "humidity":
+        ax_main.plot([humidity_threshold]*2, ax_main.get_ylim(), "b--",
+            label="humidity limit of PM sensor")
     # place colorbar
     bottom = ax_main.get_position().y0
     height = ax_top.get_position().y1 - bottom
     cbaxes = fig.add_axes([0.92, bottom, 0.02, height])
     fig.colorbar(im, cax=cbaxes, label="number of measurements")
     # arbitrary texts
-    ax_main.set_xlabel("humidity (%)")
+    ax_main.set_xlabel(xlabel)
     ax_main.set_ylabel(r"PM10 concentration ($\mathrm{\mu g/m^3}$)")
     ax_main.legend(loc="upper left")
 
     ############################################################################
-    # 1d histogram of humidity at the top
+    # 1d histogram of humidity/temperature at the top
 
-    ax_top.hist(sensor.data.humidity, bins=20, range=[0, 100],
+    ax_top.hist(xdata, bins=20, range=sensor_ranges[xtype],
         histtype="step",
-        weights=np.ones(len(sensor.data.humidity)) / len(sensor.data.humidity)
+        weights=np.ones(len(xdata)) / len(xdata)
     )
-    ax_top.set_xlim([0, 100])
+    ax_top.set_xlim(sensor_ranges[xtype])
     ax_top.get_xaxis().set_visible(False)
     ax_top.set_ylabel("percent")
     ax_top.grid()
@@ -363,8 +385,13 @@ def plot_pm_vs_humidity_hist(sensor):
 
     ax_empty.axis("off")
     plt.suptitle("\n".join([
-        "Sensor ID: {}".format(sensor.sensor_id),
-        "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.humidity)[0])
+        "sensor ID: {}, period: {} - {}".format(sensor.sensor_id,
+            sensor.data.index[0].date(), sensor.data.index[-1].date(),
+        ),
+        "measurements: {}, sampling median: {}".format(
+            len(sensor.data), sensor.median_sampling_time
+        ),
+        "PM10 - {} Pearson corr: {:.3f}".format(xtype, sensor.data[["pm10"]].corrwith(xdata)[0])
     ]))
     plt.show()
 
