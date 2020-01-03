@@ -1,5 +1,6 @@
 """Parsing functions for AQData classes."""
 
+import json
 import logging
 import os
 from pandas import read_csv
@@ -40,13 +41,30 @@ def parse_luftdaten_csv(filename):
     return read_csv(filename, sep=";", parse_dates=[0], index_col=0,
         infer_datetime_format=True, skipinitialspace=True)
 
-def parse_sensors_from_path(inputdir, sensor_ids=None, date_start=None,
-    date_end=None):
-    """Parse all sensor data in the given period from inputdir.
+def parse_metadata_json(filename):
+    """Read AQ metadata from a .json file.
 
     Parameters:
-        inputdir (Path): the path where sensor data is found, organized in
-            directories according to sensor id.
+        filename (path): the file to parse. Format of the file is speicifed in
+        aqstat\doc\examples\metadata.json
+
+    Return:
+        dictionary containing sensor metadata.
+
+    """
+    with open(filename, "r") as f:
+        metadata = json.load(f)
+
+    return metadata
+
+def parse_sensors_from_path(inputdir, sensor_ids=None, date_start=None,
+    date_end=None):
+    """Parse all sensor data in the given period and all metadata from inputdir.
+
+    Parameters:
+        inputdir (Path): the path where sensor data and metadata is found,
+            organized in directories according to sensor id. All .csv are
+            treated as sensor data, all .json are treated as metadata.
         sensor_ids (list): list of sensor_ids to be parsed.
             If None or empty, use all sensor ids found.
         date_start (datetime): starting date limit or None if not used
@@ -58,6 +76,7 @@ def parse_sensors_from_path(inputdir, sensor_ids=None, date_start=None,
 
     # import here to avoid circular imports
     from .aqdata import AQData
+    from .metadata import AQMetaData
     from .utils import find_sensor_with_id
 
     # parse all data separated according to sensors
@@ -79,6 +98,20 @@ def parse_sensors_from_path(inputdir, sensor_ids=None, date_start=None,
             sensors.append(AQData())
             i = -1
         sensors[i].merge(newsensor, inplace=True)
+
+    # parse all metadata separated according to sensors
+    for filename in sorted(Path(inputdir).glob("**/*.json")):
+        # parse metadata file
+        logging.info("Parsing {}".format(filename))
+        metadata = AQMetaData.from_json(filename)
+        # skip sensor id if needed
+        if sensor_ids:
+            if metadata.sensor_id not in sensor_ids:
+                continue
+        # add current metadata to existing list
+        i = find_sensor_with_id(sensors, metadata.sensor_id)
+        if i is not None:
+            sensors[i].metadata.merge(metadata, inplace=True)
 
     return [s for s in sensors if not s.data.empty]
 
