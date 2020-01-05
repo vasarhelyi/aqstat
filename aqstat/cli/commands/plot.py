@@ -3,8 +3,9 @@
 import click
 import logging
 
-from aqstat.plot import plot_daily_variation, plot_humidity, plot_multiple_pm, \
-    plot_multiple_humidity, plot_multiple_temperature, plot_pm, plot_pm_ratio, \
+from aqstat.plot import plot_daily_variation, plot_daily_variation_hist, \
+    plot_humidity, plot_multiple_pm, plot_multiple_humidity, \
+    plot_multiple_temperature, plot_pm, plot_pm_ratio, \
     plot_temperature, plot_pm_vs_environment_hist, plot_pm_vs_humidity, \
     plot_pm_vs_temperature
 from aqstat.parse import parse_sensor_ids_from_string_or_dir, \
@@ -54,6 +55,7 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
                 plot_pm(sensor, maxy=300)
                 plot_pm_ratio(sensor)
                 plot_daily_variation(sensor, ["pm10", "pm2_5", "pm2_5_calib"])
+                plot_daily_variation_hist(sensor, keys=["pm10"], mins=[75])
             else:
                 logging.warn("No valid PM data for sensor id {}".format(sensor.sensor_id))
         # plot temperature date

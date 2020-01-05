@@ -67,15 +67,54 @@ def plot_daily_variation(sensor, keys):
     """
 
     for i, key in enumerate(keys):
-        daily_average = sensor.data[key].groupby(sensor.data.index.day).transform("mean")
-        total_average = sensor.data[key].mean()
-        data1 = (sensor.data[key] - total_average).groupby(sensor.data.index.hour).agg(["mean", "std"])
-        data2 = (sensor.data[key] - daily_average).groupby(sensor.data.index.hour).agg(["mean", "std"])
-        plt.errorbar(x=data1.index + i * 0.1, y=data1["mean"], yerr=data1["std"], label="{} - avg({:.1f})".format(key, total_average))
-        plt.errorbar(x=data2.index + i * 0.1, y=data2["mean"], yerr=data2["std"], label="{} - daily_avg".format(key))
+        data = sensor.data[key]
+        daily_average = data.groupby(data.index.day).transform("mean")
+        total_average = data.mean()
+        data1 = (data - total_average).groupby(data.index.hour).agg(["mean", "std"])
+        data2 = (data - daily_average).groupby(data.index.hour).agg(["mean", "std"])
+        plt.errorbar(x=data1.index + i * 0.1, y=data1["mean"], yerr=data1["std"],
+            label="{} - avg({:.1f})".format(key, total_average)
+        )
+        plt.errorbar(x=data2.index + i * 0.1, y=data2["mean"], yerr=data2["std"],
+            label="{} - daily_avg".format(key)
+        )
     plt.grid(axis='y')
     plt.xlabel("hours of day")
     plt.ylabel("daily variation")
+    plt.legend()
+    plt.show()
+
+def plot_daily_variation_hist(sensor, keys, mins=None):
+    """Plot histogram of daily variation of data accumulated through several days.
+
+    Parameters:
+        sensor (AQData): the sensor containing the dataset to plot
+        keys (list[str]): the list of keys of the data Series we need to plot
+        mins (list[float]): the list of lower threshold values corresponding
+            to the keys, or None if no lower threshold is used
+    """
+
+    for i, key in enumerate(keys):
+        if mins is None:
+            data = sensor.data[key]
+        else:
+            data = sensor.data[key][sensor.data[key] >= mins[i]]
+        plt.hist(data.index.hour, bins=24, range=[0, 23], histtype="bar",
+            weights=np.ones(len(data)) / len(data), label="{}{}".format(
+            key, "" if mins is None else " > {}".format(mins[i]))
+        )
+    plt.grid(axis='y')
+    plt.xlabel("hours of day")
+    plt.ylabel("relative occurrences (%)")
+    plt.title("\n".join([
+        "sensor ID: {}, period: {} - {}".format(sensor.sensor_id,
+            sensor.data.index[0].date(), sensor.data.index[-1].date(),
+        ),
+        "measurements: {}, sampling median: {}".format(
+            len(data), sensor.median_sampling_time
+        ),
+    ]))
+    plt.gca().yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1))
     plt.legend()
     plt.show()
 
