@@ -56,6 +56,7 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
                 plot_pm_ratio(sensor)
                 plot_daily_variation(sensor, ["pm10", "pm2_5", "pm2_5_calib"])
                 plot_daily_variation_hist(sensor, keys=["pm10"], mins=[75])
+                plot_daily_variation_hist(sensor, keys=["pm2_5"], mins=[50])
             else:
                 logging.warn("No valid PM data for sensor id {}".format(sensor.sensor_id))
         # plot temperature date
@@ -63,7 +64,7 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
             if sensor.data.temperature.count():
                 plot_temperature(sensor)
                 plot_pm_vs_temperature(sensor)
-                plot_pm_vs_environment_hist(sensor, xtype="temperature")
+                plot_pm_vs_environment_hist(sensor, key="temperature")
                 plot_daily_variation(sensor, ["temperature"])
             else:
                 logging.warn("No valid temperature data for sensor id {}".format(sensor.sensor_id))
@@ -72,7 +73,7 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
             if sensor.data.humidity.count():
                 plot_humidity(sensor)
                 plot_pm_vs_humidity(sensor)
-                plot_pm_vs_environment_hist(sensor, xtype="humidity")
+                plot_pm_vs_environment_hist(sensor, key="humidity")
                 plot_daily_variation(sensor, ["humidity"])
             else:
                 logging.warn("No valid humidity data for sensor id {}".format(sensor.sensor_id))
@@ -80,9 +81,9 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
     # plot multiple sensor data
     if len(sensors) > 1:
         if all or multiple_particle:
-            plot_multiple_pm(sensors, pm10=True, pm2_5=True)
+            plot_multiple_pm(sensors, keys=["pm10"])
+            plot_multiple_pm(sensors, keys=["pm2_5"])
         if all or multiple_humidity:
             plot_multiple_humidity(sensors)
         if all or multiple_temperature:
             plot_multiple_temperature(sensors)
-            pass
