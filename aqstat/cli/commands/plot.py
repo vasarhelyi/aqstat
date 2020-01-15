@@ -8,7 +8,7 @@ from aqstat.plot import plot_daily_variation, plot_daily_variation_hist, \
     plot_multiple_temperature, plot_pm, plot_pm_ratio, \
     plot_temperature, plot_pm_vs_environment_hist, plot_pm_vs_humidity, \
     plot_pm_vs_temperature
-from aqstat.parse import parse_sensor_ids_from_string_or_dir, \
+from aqstat.parse import parse_ids_from_string_or_dir, \
     parse_sensors_from_path
 
 
@@ -36,7 +36,7 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
     """
 
     # get list of sensor IDs from option
-    sensor_ids = parse_sensor_ids_from_string_or_dir(string=sensor_ids)
+    sensor_ids = parse_ids_from_string_or_dir(string=sensor_ids)
     # parse sensors from files
     sensors = parse_sensors_from_path(inputdir, sensor_ids, date_start, date_end)
     # perform calibration on sensor data
@@ -63,18 +63,20 @@ def plot(inputdir, sensor_ids=None, date_start=None, date_end=None, particle=Fal
         if all or temperature:
             if sensor.data.temperature.count():
                 plot_temperature(sensor)
-                plot_pm_vs_temperature(sensor)
-                plot_pm_vs_environment_hist(sensor, key="temperature")
                 plot_daily_variation(sensor, ["temperature"])
+                if sensor.data.pm10.count():
+                    plot_pm_vs_temperature(sensor)
+                    plot_pm_vs_environment_hist(sensor, key="temperature")
             else:
                 logging.warn("No valid temperature data for sensor id {}".format(sensor.sensor_id))
         # plot humidity data
         if all or humidity:
             if sensor.data.humidity.count():
                 plot_humidity(sensor)
-                plot_pm_vs_humidity(sensor)
-                plot_pm_vs_environment_hist(sensor, key="humidity")
                 plot_daily_variation(sensor, ["humidity"])
+                if sensor.data.pm10.count():
+                    plot_pm_vs_humidity(sensor)
+                    plot_pm_vs_environment_hist(sensor, key="humidity")
             else:
                 logging.warn("No valid humidity data for sensor id {}".format(sensor.sensor_id))
 

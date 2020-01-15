@@ -1,0 +1,33 @@
+{
+    "chip_id": 11797099,
+    "sensors": {
+        "pm10": {
+            "sensor_id": 35231,
+            "type": "SDS011"
+        },
+        "pm2_5": {
+            "sensor_id": 35231,
+            "type": "SDS011"
+        },
+        "humidity": {
+            "sensor_id": 35232,
+            "type": "DHT22"
+        },
+        "temperature": {
+            "sensor_id": 35232,
+            "type": "DHT22"
+        },
+    },
+    "description": "Kertesházban, teraszon, faltól 1m-re fellógatva, zsákutca végén, falu szélén uralkodó ÉNY-i szélirány felől, de völgyben, ahol mégis rendszeresen megül a levegő. Bár közvetlen szomszédok nincsenek, kb. 200m-re rendszeres a rossz minőségű szilárd tüzelés, szemétégetés. Helyi fűtés faelgázosító kazán.",
+    "location": {
+        "lat": 47.83076188281,
+        "lon": 19.03163230416,
+        "amsl": 116,
+        "agl": 2.4
+    },
+    "owner": {
+        "name": "Vásárhelyi Gábor",
+        "email": "vasarhelyi@hal.elte.hu",
+        "phone": "0036209928356"
+    }
+}

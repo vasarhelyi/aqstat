@@ -158,9 +158,8 @@ def plot_multiple_humidity(sensors):
     for sensor in sensors:
         sensor.data.plot(y="humidity", label="{} humidity".format(sensor.sensor_id), ax=ax)
         plt.ylabel("humidity (%)")
-    plt.plot(plt.xlim(), [humidity_threshold, humidity_threshold], 'r--', label="PM sensor validity limit")
+    plt.plot(plt.xlim(), [humidity_threshold]*2, 'r--', label="PM sensor validity limit")
     plt.ylim([0, 100])
-    plt.yticks([0, humidity_threshold, 100])
     plt.grid(axis='y')
     plt.legend()
     plt.show()

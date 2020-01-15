@@ -1,10 +1,12 @@
 """AQ Class definition for Air Quality data analysis."""
 
 from numpy import log
-from pandas import DataFrame, Timedelta, Timestamp, to_datetime
+from pandas import DataFrame, Timedelta, Timestamp, to_datetime, merge
 
-from .parse import parse_id_from_luftdaten_csv, parse_luftdaten_csv
-from .metadata import AQMetaData
+from .parse import parse_metadata_from_filename, parse_madavi_csv, \
+    parse_sensorcommunity_csv
+
+from .metadata import AQMetaData, SensorInfo
 
 class AQData(object):
     """A generic class to store AQ sensor parameters and sensor data.
@@ -23,12 +25,12 @@ class AQData(object):
     }
     data_columns = "temperature humidity pm10 pm2_5".split()
 
-    def __init__(self, sensor_id=None, metadata=AQMetaData(),
+    def __init__(self, chip_id=None, metadata=AQMetaData(),
         data=DataFrame(columns=data_columns, index=to_datetime([])),
         date_start=None, date_end=None,
     ):
         self.metadata = metadata # metadata, useful descriptors
-        self.sensor_id = sensor_id # special property from metadata with convenience usage
+        self.chip_id = chip_id # special property from metadata with convenience usage
         self.data = data.sort_index() # all the time series of AQ data as pandas DataFrame indexed by datetime
         if date_start is not None:
             self.data = self.data[self.data.index.date >= Timestamp(date_start)]
@@ -54,6 +56,14 @@ class AQData(object):
         self.data["pm2_5_calib"] = self.data.pm2_5 / (
             -0.509 * log(self.data.pm10_per_pm2_5) + 1.2203
         )
+
+    @property
+    def chip_id(self):
+        return self.metadata.chip_id
+
+    @chip_id.setter
+    def chip_id(self, value):
+        self.metadata.chip_id = value
 
     def corrwith(self, other, method="pearson", tolerance=60):
         """Correlate self with another sensor dataset.
@@ -87,22 +97,47 @@ class AQData(object):
         """Create a new class from a csv file.
 
         Parameters:
-            filename (Path): file to read (luftdaten.info .csv format so far)
+            filename (Path): .csv file to read in format used by
+                madavi.de or archive.sensor.community (autodetected).
             date_start (datetime): starting date limit or None if not used
             date_end (datetime): ending date limit or None if not used.
 
         Return:
             a new AQData class with parsed data
         """
-        # parse data
-        sensor_id = parse_id_from_luftdaten_csv(filename)
-        raw_data = parse_luftdaten_csv(filename)
-        # select and rename data columns
-        data = raw_data[["Temp", "Humidity", "SDS_P1", "SDS_P2"]]
-        data.columns = self.data_columns
+        chip_id, sensor_id, sensor_type, date = parse_metadata_from_filename(filename)
+        # error checking
+        if chip_id is None and sensor_id is None:
+            raise ValueError("Could not parse file {}".format(filename))
+        # parse, select and rename data columns for madavi.de format
+        if chip_id:
+            raw_data = parse_madavi_csv(filename)
+            data = raw_data[["Temp", "Humidity", "SDS_P1", "SDS_P2"]]
+            data.columns = self.data_columns
+            metadata = AQMetaData(chip_id=chip_id)
+        # parse, select and rename data columns for sensor.community format,
+        # which is separated to individual sensors
+        else:
+            raw_data = parse_sensorcommunity_csv(filename)
+            if sensor_type == "sds011":
+                data = raw_data[["P1", "P2"]]
+                data.columns = ["pm10", "pm2_5"]
+                data.reindex(self.data_columns)
+                metadata = AQMetaData(sensors={
+                    SensorInfo("pm10", sensor_type.upper(), sensor_id),
+                    SensorInfo("pm2_5", sensor_type.upper(), sensor_id),
+                })
+            elif sensor_type == "dht22":
+                data = raw_data[["temperature", "humidity"]]
+                data.columns = ["temperature", "humidity"]
+                data.reindex(self.data_columns)
+                metadata = AQMetaData(sensors={
+                    SensorInfo("temperature", sensor_type.upper(), sensor_id),
+                    SensorInfo("humidity", sensor_type.upper(), sensor_id),
+                })
 
-        return self(sensor_id=sensor_id, data=data, date_start=date_start,
-            date_end=date_end)
+        return self(chip_id=chip_id, data=data, metadata=metadata,
+            date_start=date_start, date_end=date_end)
 
     @property
     def median_sampling_time(self):
@@ -122,9 +157,16 @@ class AQData(object):
             object: the union of this dataset and the other one
 
         """
+        # TODO: optimize inplace
 
         metadata = self.metadata.merge(other.metadata)
-        data = self.data.append(other.data).sort_index()
+        data = self.data.append(other.data, sort=False).sort_index()
+        #data = self.data.join(other.data, how="outer")
+        #data = merge(self.data, other.data, how="outer", on=None, left_index=True, right_index=True)
+        #data = merge_asof(self.data, other.data, left_index=True, right_index=True, tolerance=Timedelta(seconds=5), direction='nearest') # problem: other's unique parts are skipped...
+        # TODO: in sensorcommunity data sensors are stored in separate files
+        #   and timestamps are not matched perfectly. how to combine closeby
+        #   timestamps?
 
         # change data inplace
         if inplace:
@@ -138,9 +180,7 @@ class AQData(object):
         )
 
     @property
-    def sensor_id(self):
-        return self.metadata.sensor_id
-
-    @sensor_id.setter
-    def sensor_id(self, value):
-        self.metadata.sensor_id = value
+    def sensor_ids(self):
+        return list(set(self.metadata.sensors[key].sensor_id
+            for key in self.metadata.sensors)
+        )
