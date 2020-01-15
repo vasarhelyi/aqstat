@@ -3,8 +3,6 @@
 from collections import namedtuple
 import json
 
-from .parse import parse_metadata_json
-
 GPSCoordinate = namedtuple("GPSCoordinate", "lat lon amsl agl") # [deg deg m m]
 ContactInfo = namedtuple("ContactInfo", "name email phone")
 SensorInfo = namedtuple("SensorInfo", "name type sensor_id") # TODO: csvcolname, unit
@@ -20,6 +18,9 @@ class AQMetaData(object):
         self.description = description # [str]
         self.location = location # [GPSCoordinate]
         self.owner = owner # [ContactInfo]
+
+    def __repr__(self):
+        return str(self.as_dict())
 
     def as_dict(self):
         """Create a dictionary representation of self."""
@@ -46,7 +47,7 @@ class AQMetaData(object):
             "phone": self.owner.phone,
         }
 
-    return ret
+        return ret
 
     @classmethod
     def from_json(self, filename):
@@ -118,17 +119,17 @@ class AQMetaData(object):
                              "chip ids: {} and {}".format(
                 self.chip_id, other.chip_id))
         # merge sensor descriptions
-        sensors = {}
+        sensors = dict(self.sensors)
         for key in other.sensors:
-            if key in self.sensors:
-                sensor_id = self.sensors[key].sensor_id or other.sensors[key].sensor_id
+            if key in sensors:
+                sensor_id = sensors[key].sensor_id or other.sensors[key].sensor_id
                 if other.sensors[key].sensor_id is not None and sensor_id != other.sensors[key].sensor_id:
                     raise ValueError("Cannot merge two {} sensors with different "
                                      "sensor ids: {} and {}".format(
-                        key, self.sensors[key].sensor_id, other.sensors[key].sensor_id))
+                        key, sensors[key].sensor_id, other.sensors[key].sensor_id))
                 sensors[key] = SensorInfo(
                     name=key,
-                    type=self.sensors[key].type or other.sensors[key].type,
+                    type=sensors[key].type or other.sensors[key].type,
                     sensor_id=sensor_id
                 )
             else:

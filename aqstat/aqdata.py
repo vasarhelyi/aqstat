@@ -16,13 +16,6 @@ class AQData(object):
 
     """
 
-    # TODO: parse and use adaptively, generalize to other sensor types
-    sensors = {
-        "pm10": "SDS011",
-        "pm2_5": "SDS011",
-        "temperature": "DHT22",
-        "humidity": "DHT22",
-    }
     data_columns = "temperature humidity pm10 pm2_5".split()
 
     def __init__(self, chip_id=None, metadata=AQMetaData(),
@@ -36,6 +29,14 @@ class AQData(object):
             self.data = self.data[self.data.index.date >= Timestamp(date_start)]
         if date_end is not None:
             self.data = self.data[self.data.index.date <= Timestamp(date_end)]
+
+    def __repr__(self):
+        return str({
+            "chip_id": self.chip_id,
+            "sensor_ids": self.sensor_ids,
+            "data": self.data,
+            "metadata": self.metadata
+        })
 
     def calibrate(self):
         """Perform calibration on PM dataset."""
@@ -109,14 +110,15 @@ class AQData(object):
         # error checking
         if chip_id is None and sensor_id is None:
             raise ValueError("Could not parse file {}".format(filename))
-        # parse, select and rename data columns for madavi.de format
+        # parse, select and rename data columns for madavi.de format,
+        # which uses chip_ids and all sensors in one file
         if chip_id:
             raw_data = parse_madavi_csv(filename)
             data = raw_data[["Temp", "Humidity", "SDS_P1", "SDS_P2"]]
             data.columns = self.data_columns
             metadata = AQMetaData(chip_id=chip_id)
         # parse, select and rename data columns for sensor.community format,
-        # which is separated to individual sensors
+        # which uses sensor_ids and is separated to individual sensor files
         else:
             raw_data = parse_sensorcommunity_csv(filename)
             if sensor_type == "sds011":
@@ -124,16 +126,16 @@ class AQData(object):
                 data.columns = ["pm10", "pm2_5"]
                 data.reindex(self.data_columns)
                 metadata = AQMetaData(sensors={
-                    SensorInfo("pm10", sensor_type.upper(), sensor_id),
-                    SensorInfo("pm2_5", sensor_type.upper(), sensor_id),
+                    "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
+                    "pm2_5": SensorInfo("pm2_5", sensor_type.upper(), sensor_id),
                 })
             elif sensor_type == "dht22":
                 data = raw_data[["temperature", "humidity"]]
                 data.columns = ["temperature", "humidity"]
                 data.reindex(self.data_columns)
                 metadata = AQMetaData(sensors={
-                    SensorInfo("temperature", sensor_type.upper(), sensor_id),
-                    SensorInfo("humidity", sensor_type.upper(), sensor_id),
+                    "temperature": SensorInfo("temperature", sensor_type.upper(), sensor_id),
+                    "humidity": SensorInfo("humidity", sensor_type.upper(), sensor_id),
                 })
 
         return self(chip_id=chip_id, data=data, metadata=metadata,
@@ -146,36 +148,42 @@ class AQData(object):
 
         return df.median()
 
-    def merge(self, other, inplace=False):
+    def merge(self, other, tolerance=Timedelta(seconds=5), inplace=False):
         """Returns another sensor dataset that is the union of this sensor
         dataset and another one.
 
         Parameters:
             other (AQData): the other dataset to unite this with
+            tolerance (Timedelta): time tolerance below which we combine rows
+                This is needed as in archive.sensor.community data the
+                different sensors in the same device produce separate
+                measurement files with similar but not equal timestamps
+                that needs to be combined smoothly
+            inplace (bool): should we change self or return new object
 
         Returns:
-            object: the union of this dataset and the other one
+            object: the union of this dataset and the other one or None
+                if inplace is True
 
         """
-        # TODO: optimize inplace
 
-        metadata = self.metadata.merge(other.metadata)
+        # first append other to self (assuming columns are the same)
         data = self.data.append(other.data, sort=False).sort_index()
-        #data = self.data.join(other.data, how="outer")
-        #data = merge(self.data, other.data, how="outer", on=None, left_index=True, right_index=True)
-        #data = merge_asof(self.data, other.data, left_index=True, right_index=True, tolerance=Timedelta(seconds=5), direction='nearest') # problem: other's unique parts are skipped...
-        # TODO: in sensorcommunity data sensors are stored in separate files
-        #   and timestamps are not matched perfectly. how to combine closeby
-        #   timestamps?
+        # then get time difference as group indicator
+        data['index'] = data.index
+        data['diff'] = (data['index'].diff().abs() > tolerance).cumsum()
+        # then group and aggregate closeby rows, using the first not NaN value
+        data = data.groupby('diff').aggregate('first').set_index('index')
+        data.index.name = None
 
         # change data inplace
         if inplace:
-            self.metadata = metadata
+            self.metadata.merge(other.metadata, inplace=True)
             self.data = data
             return None
         # or create new class with merged data
         return self.__class__(
-            metadata=metadata,
+            metadata=self.metadata.merge(other.metadata),
             data=data
         )
 

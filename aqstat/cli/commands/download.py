@@ -45,6 +45,9 @@ def download_madavi(outputdir, chip_ids, date_start, date_end):
             url = os.path.join(baseurl, filename)
             outfile = os.path.join(outdir, os.path.split(filename)[1])
             r = requests.get(url, stream=True)
+            # skip non-existing or not OK files
+            if r.status_code != 200:
+                continue
             # TODO: compare current and cached ETag values instead of size
             #       hint: https://pypi.org/project/requests-etag-cache/
             if os.path.exists(outfile):

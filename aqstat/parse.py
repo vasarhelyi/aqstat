@@ -20,7 +20,7 @@ def parse_metadata_from_madavi_csv_filename(filename):
         tuple: (chip_id, date) of possible, (None, None) otherwise
 
     """
-    tokens = os.path.basename(filename).split("-")
+    tokens = os.path.basename(os.path.splitext(filename)[0]).split("-")
     if len(tokens) == 6 and tokens[0] == "data" and tokens[1] == "esp8266":
         chip_id = int(tokens[2])
         date = datetime(year=tokens[3], month=tokens[4], day=tokens[5])
@@ -46,7 +46,7 @@ def parse_metadata_from_sensorcommunity_csv_filename(filename):
             (None, None, None) otherwise
 
     """
-    tokens = os.path.basename(filename).split("_")
+    tokens = os.path.basename(os.path.splitext(filename)[0]).split("_")
     if len(tokens) == 4 and tokens[2] == "sensor":
         date = datetime.strptime(tokens[0], "%Y-%m-%d")
         sensor_type = tokens[1]
@@ -160,7 +160,7 @@ def parse_sensors_from_path(inputdir, chip_ids=None,
         # add new metadata to list
         i = find_sensor_with_id(sensors, chip_id=metadata.chip_id)
         if i is None:
-            sensors.append(AQData(metadata=metadata))
+            sensors.append(AQData(chip_id=metadata.chip_id, metadata=metadata))
         else:
             sensors[i].metadata.merge(metadata, inplace=True)
 
@@ -171,11 +171,14 @@ def parse_sensors_from_path(inputdir, chip_ids=None,
         # if we have sensor_id but no chip_id, try to infer chip_id from metadata
         if chip_id is None and sensor_id is not None:
             i = find_sensor_with_id(sensors, sensor_id=sensor_id)
-            chip_id = sensors[i].chip_id
+            if i:
+                chip_id = sensors[i].chip_id
         # skip file if needed
         if chip_ids and chip_id not in chip_ids:
             continue
-        if date and (date < date_start or date > date_end):
+        if date and date_start and date < date_start:
+            continue
+        if date and date_end and date > date_end:
             continue
         # parse sensor file
         logging.info("Parsing {}".format(filename))
