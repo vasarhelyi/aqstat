@@ -7,6 +7,8 @@ import os
 from pandas import read_csv
 from pathlib import Path
 
+from .utils import find_sensor_with_id
+
 def parse_metadata_from_madavi_csv_filename(filename):
     """Parse chip_id and date from a raw madavi.de AQ .csv filename.
 
@@ -144,7 +146,6 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
     # import here to avoid circular imports
     from .aqdata import AQData
     from .metadata import AQMetaData
-    from .utils import find_sensor_with_id
 
     sensors = []
 
@@ -169,6 +170,10 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
             sensors.append(AQData(metadata=metadata))
         else:
             sensors[i].metadata.merge(metadata, inplace=True)
+
+    # if names was specified but no matches are found, we quit here
+    if names and not chip_ids:
+        return []
 
     # parse all data separated according to sensors
     for filename in sorted(Path(inputdir).glob("**/*.csv")):
