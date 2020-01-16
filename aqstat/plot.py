@@ -81,6 +81,7 @@ def plot_daily_variation(sensor, keys):
     plt.grid(axis='y')
     plt.xlabel("hours of day")
     plt.ylabel("daily variation")
+    plt.title(sensor.name)
     plt.legend()
     plt.show()
 
@@ -196,6 +197,8 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None
             plt.plot(plt.xlim(), [pm_limits[label][0]]*2, linestyle="--",
                 color=pm_limits[label][1], label=label
             )
+    if window:
+        plt.title("rolling window: {}".format(window))
     plt.grid(axis='y')
     plt.legend()
     plt.show()
@@ -249,11 +252,12 @@ def plot_pm(sensor):
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
     plt.legend()
-    plt.title(r"{}, PM10 polluted days: {}/{}".format(sensor.name,
+    plt.title(r"PM10 polluted days: {}/{}".format(
         daily_data.pm10[daily_data.pm10 > pm_limits["PM10 daily health limit"][0]].count(),
         len(daily_data),
     ))
     a1.set_ylim(sensor_ranges["pm10"])
+    plt.suptitle(sensor.name)
     plt.show()
 
 def plot_pm_ratio(sensor):

@@ -69,7 +69,7 @@ def download_madavi(outputdir, chip_ids, date_start, date_end):
                     zip_ref.extractall(outdir)
 
 def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
-    sensor_types=["sds011", "dht22"]
+    sensor_types=["sds011", "dht22", "bme280"]
 ):
     """Download files from archive.sensor.community.
 
@@ -91,6 +91,10 @@ def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
     while date <= date_end:
         datestring = date.strftime("%Y-%m-%d")
         for sensor_id in sensor_ids:
+            # note that many non existing ones are also added here, they will be
+            # skipped later on requests.get's wrong status_code, but this is the
+            # most convenient way to find out which sensor id belongs to what
+            # sensor type
             for sensor_type in sensor_types:
                 urllist.append(r"{}/{}/{}_{}_sensor_{}.csv".format(baseurl,
                     datestring, datestring, sensor_type.lower(), sensor_id))
@@ -108,7 +112,6 @@ def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
             continue
         # TODO: compare current and cached ETag values instead of size
         #       hint: https://pypi.org/project/requests-etag-cache/
-        # TODO what if does not exist?
         if os.path.exists(outfile):
             remote_size = int(r.headers["Content-Length"])
             local_size = int(os.stat(outfile).st_size)

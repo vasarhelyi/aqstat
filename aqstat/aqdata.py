@@ -129,7 +129,7 @@ class AQData(object):
                     "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
                     "pm2_5": SensorInfo("pm2_5", sensor_type.upper(), sensor_id),
                 })
-            elif sensor_type == "dht22":
+            elif sensor_type in ["dht22", "bme280"]:
                 data = raw_data[["temperature", "humidity"]]
                 data.columns = ["temperature", "humidity"]
                 data.reindex(self.data_columns)

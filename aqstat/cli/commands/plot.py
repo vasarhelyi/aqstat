@@ -15,7 +15,8 @@ from aqstat.parse import parse_ids_from_string_or_dir, \
 
 @click.command()
 @click.argument("inputdir", type=click.Path(exists=True))
-@click.argument("ids", required=False)
+@click.option("-i", "--chip-ids", default="", help="comma separated list of chip ids to plot.")
+@click.option("-n", "--names", default="", help="comma separated list of sensor names to plot (partial matches accepted)")
 @click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
 @click.option("-p", "--particle", is_flag=True, help="plot PM data")
@@ -24,22 +25,22 @@ from aqstat.parse import parse_ids_from_string_or_dir, \
 @click.option("-mp", "--multiple-particle", is_flag=True, help="plot multiple PM data")
 @click.option("-mh", "--multiple-humidity", is_flag=True, help="plot multiple humidity data")
 @click.option("-mt", "--multiple-temperature", is_flag=True, help="plot multiple temperature data")
-def plot(inputdir, ids=None, date_start=None, date_end=None, particle=False,
-    humidity=False, temperature=False, multiple_particle=False,
+def plot(inputdir, chip_ids="", names="", date_start=None, date_end=None,
+    particle=False, humidity=False, temperature=False, multiple_particle=False,
     multiple_humidity=False, multiple_temperature=False):
     """Plot AQ data in various ways from all .csv files in the directory tree
-    under INPUTDIR, for the given IDS (sensor id or chip id).
+    under INPUTDIR
 
-    IDS should be a comma separated list of integers.
-    If no IDS are given, all data will be used under INPUTDIR.
+    All sensor data will be plotted under INPUTDIR by default, unless ID or NAME
+    options are given to specify sensors explicitely.
 
     """
 
-    # get list of sensor IDs from option
-    ids = parse_ids_from_string_or_dir(string=ids)
+    # get list of chip IDs and names from option
+    chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
+    names = names.split(",") if names else []
     # parse sensors from files
-    # TODO: have option to specify sensor ids as well...
-    sensors = parse_sensors_from_path(inputdir, chip_ids=ids,
+    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids, names=names,
         date_start=date_start, date_end=date_end)
     # perform calibration on sensor data
     for sensor in sensors:
@@ -92,6 +93,7 @@ def plot(inputdir, ids=None, date_start=None, date_end=None, particle=False,
             plot_multiple_pm(sensors, keys=["pm10"])
             plot_multiple_pm(sensors, keys=["pm10"], window="1h")
             plot_multiple_pm(sensors, keys=["pm2_5"])
+            plot_multiple_pm(sensors, keys=["pm2_5"], window="1h")
         if all or multiple_humidity:
             plot_multiple_humidity(sensors)
         if all or multiple_temperature:

@@ -22,7 +22,8 @@ def test(inputdir, chip_ids=None, date_start=None, date_end=None):
     # get list of chip IDs from option
     chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
     # parse sensors from files
-    sensors = parse_sensors_from_path(inputdir, chip_ids, date_start, date_end)
+    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids,
+        date_start=date_start, date_end=date_end)
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()

@@ -120,7 +120,7 @@ def parse_sensorcommunity_csv(filename):
         skipinitialspace=True
     )
 
-def parse_sensors_from_path(inputdir, chip_ids=None,
+def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
     date_start=None, date_end=None
 ):
     """Parse all sensor data and metadata for the given chip_ids in the given
@@ -131,7 +131,9 @@ def parse_sensors_from_path(inputdir, chip_ids=None,
             All .csv are treated as sensor data,
             all .json are treated as metadata.
         chip_ids (list): list of chip_ids to be parsed.
-            If None or empty, use all chip ids found.
+            If empty (and names is empty, too), parse all sensors found.
+        names (list): list of sensor names to be parsed (partial match accepted)
+            If empty (and chip_ids is empty, too), parse all sensors found.
         date_start (datetime): starting date limit or None if not used
         date_end (datetime): ending date limit or None if not used
 
@@ -154,6 +156,10 @@ def parse_sensors_from_path(inputdir, chip_ids=None,
         # parse metadata file
         logging.info("Parsing {}".format(filename))
         metadata = AQMetaData.from_json(filename)
+        # add chip_id if name matches
+        if names and True in [name in metadata.name for name in names]:
+            if metadata.chip_id not in chip_ids:
+                chip_ids.append(metadata.chip_id)
         # skip chip id if needed
         if chip_ids and metadata.chip_id not in chip_ids:
             continue
