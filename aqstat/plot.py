@@ -141,7 +141,7 @@ def plot_humidity(sensor):
     plt.text(idxmax, maxvalue, "{:.1f} %".format(maxvalue),
         ha="center", va="bottom"
     )
-    # setup additional stuff
+
     plt.ylabel("humidity (%)")
     plt.grid(axis='y')
     plt.title(sensor.name)
@@ -164,22 +164,27 @@ def plot_multiple_humidity(sensors):
     plt.legend()
     plt.show()
 
-def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"]):
+def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None):
     """Plot time series of PM10/PM2.5/PM2.5_calib data from multiple sensors.
 
     Parameters:
         sensors (list(AQData)): the sensors containing the dataset to plot
         keys (list[str]): the list of keys of the data Series we need to plot.
+        window(int|offset): size of moving window averaging or None if not used.
 
     """
     ax = plt.figure().gca()
     for sensor in sensors:
+        if window:
+            data = sensor.data.rolling(window=window).mean()
+        else:
+            data = sensor.data
         if "pm10" in keys:
-            sensor.data.plot(y="pm10", label="{} PM10".format(sensor.name), ax=ax)
+            data.plot(y="pm10", label="{} PM10".format(sensor.name), ax=ax)
         if "pm2_5" in keys:
-            sensor.data.plot(y="pm2_5", label="{} PM2.5".format(sensor.name), ax=ax)
+            data.plot(y="pm2_5", label="{} PM2.5".format(sensor.name), ax=ax)
         if "pm2_5_calib" in keys:
-            sensor.data.plot(y="pm2_5_calib", label="{} PM2.5 calib".format(sensor.name), ax=ax)
+            data.plot(y="pm2_5_calib", label="{} PM2.5 calib".format(sensor.name), ax=ax)
         plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     if "pm10" in keys:
         for label in [x for x in pm_limits if x.startswith("PM10")]:

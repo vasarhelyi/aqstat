@@ -90,6 +90,7 @@ def plot(inputdir, ids=None, date_start=None, date_end=None, particle=False,
     if len(sensors) > 1:
         if all or multiple_particle:
             plot_multiple_pm(sensors, keys=["pm10"])
+            plot_multiple_pm(sensors, keys=["pm10"], window="1h")
             plot_multiple_pm(sensors, keys=["pm2_5"])
         if all or multiple_humidity:
             plot_multiple_humidity(sensors)
