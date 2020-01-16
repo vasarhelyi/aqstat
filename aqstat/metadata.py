@@ -10,9 +10,10 @@ SensorInfo = namedtuple("SensorInfo", "name type sensor_id") # TODO: csvcolname,
 class AQMetaData(object):
     """A generic class to store AQ sensor metadata."""
 
-    def __init__(self, chip_id=None, sensors = {}, description=None,
+    def __init__(self, name="", chip_id=None, sensors = {}, description="",
         location=GPSCoordinate("", "", "", ""), owner=ContactInfo("", "" ,"")
     ):
+        self.name = name # [str] - preference is town-street
         self.chip_id = chip_id # [int]
         self.sensors = sensors # [dict(SensorInfo)]
         self.description = description # [str]
@@ -26,6 +27,7 @@ class AQMetaData(object):
         """Create a dictionary representation of self."""
         ret = {}
 
+        ret["name"] = self.name
         ret["chip_id"] = self.chip_id
         ret["sensors"] = {}
         for key in self.sensors:
@@ -64,6 +66,8 @@ class AQMetaData(object):
         with open(filename, "r") as f:
             metadata = json.load(f)
 
+        # parse name
+        name = metadata["name"]
         # parse chip_id
         chip_id = metadata["chip_id"]
         # parse sensors
@@ -91,6 +95,7 @@ class AQMetaData(object):
         )
 
         return self(
+            name=name,
             chip_id=chip_id,
             sensors=sensors,
             description=description,
@@ -150,6 +155,7 @@ class AQMetaData(object):
 
         # change data inplace
         if inplace:
+            self.name = self.name or other.name
             self.chip_id = chip_id
             self.sensors = sensors
             self.description = self.description or other.description
@@ -159,10 +165,10 @@ class AQMetaData(object):
             return None
         # or create new class with merged data
         return self.__class__(
+            name=self.name or other.name,
             chip_id=chip_id,
             sensors=sensors,
             description=self.description or other.description,
             location=location,
             owner=owner,
         )
-

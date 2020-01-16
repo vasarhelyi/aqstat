@@ -107,8 +107,8 @@ def plot_daily_variation_hist(sensor, keys, mins=None):
     plt.xlabel("hours of day")
     plt.ylabel("relative occurrences (%)")
     plt.title("\n".join([
-        "chip ID: {}, period: {} - {}".format(sensor.chip_id,
-            sensor.data.index[0].date(), sensor.data.index[-1].date(),
+        "{}, period: {} - {}".format(sensor.name, sensor.data.index[0].date(),
+            sensor.data.index[-1].date(),
         ),
         "measurements: {}, sampling median: {}".format(
             len(data), sensor.median_sampling_time
@@ -144,7 +144,7 @@ def plot_humidity(sensor):
     # setup additional stuff
     plt.ylabel("humidity (%)")
     plt.grid(axis='y')
-    plt.title("Chip ID: {}".format(sensor.chip_id))
+    plt.title(sensor.name)
     plt.show()
 
 def plot_multiple_humidity(sensors):
@@ -156,7 +156,7 @@ def plot_multiple_humidity(sensors):
     """
     ax = plt.figure().gca()
     for sensor in sensors:
-        sensor.data.plot(y="humidity", label="{} humidity".format(sensor.chip_id), ax=ax)
+        sensor.data.plot(y="humidity", label="{} humidity".format(sensor.name), ax=ax)
         plt.ylabel("humidity (%)")
     plt.plot(plt.xlim(), [humidity_threshold]*2, 'r--', label="PM sensor validity limit")
     plt.ylim([0, 100])
@@ -175,11 +175,11 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"]):
     ax = plt.figure().gca()
     for sensor in sensors:
         if "pm10" in keys:
-            sensor.data.plot(y="pm10", label="{} PM10".format(sensor.chip_id), ax=ax)
+            sensor.data.plot(y="pm10", label="{} PM10".format(sensor.name), ax=ax)
         if "pm2_5" in keys:
-            sensor.data.plot(y="pm2_5", label="{} PM2.5".format(sensor.chip_id), ax=ax)
+            sensor.data.plot(y="pm2_5", label="{} PM2.5".format(sensor.name), ax=ax)
         if "pm2_5_calib" in keys:
-            sensor.data.plot(y="pm2_5_calib", label="{} PM2.5 calib".format(sensor.chip_id), ax=ax)
+            sensor.data.plot(y="pm2_5_calib", label="{} PM2.5 calib".format(sensor.name), ax=ax)
         plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     if "pm10" in keys:
         for label in [x for x in pm_limits if x.startswith("PM10")]:
@@ -204,7 +204,7 @@ def plot_multiple_temperature(sensors):
     """
     ax = plt.figure().gca()
     for sensor in sensors:
-        sensor.data.plot(y="temperature", label="{} temperature".format(sensor.chip_id), ax=ax)
+        sensor.data.plot(y="temperature", label="{} temperature".format(sensor.name), ax=ax)
         plt.ylabel(r"temperature ($\mathrm{\degree C}$)")
     plt.grid(axis='y')
     plt.legend()
@@ -244,8 +244,7 @@ def plot_pm(sensor):
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
     plt.legend()
-    plt.title(r"Chip ID: {}, PM10 polluted days: {}/{}".format(
-        sensor.chip_id,
+    plt.title(r"{}, PM10 polluted days: {}/{}".format(sensor.name,
         daily_data.pm10[daily_data.pm10 > pm_limits["PM10 daily health limit"][0]].count(),
         len(daily_data),
     ))
@@ -262,7 +261,7 @@ def plot_pm_ratio(sensor):
     sensor.data.plot(y="pm10_per_pm2_5", label="PM10 / PM2.5")
     plt.grid(axis='y')
     plt.legend()
-    plt.title("Chip ID: {}".format(sensor.chip_id))
+    plt.title(sensor.name)
     plt.show()
 
 def plot_temperature(sensor):
@@ -295,7 +294,7 @@ def plot_temperature(sensor):
     ylim = plt.ylim()
     if ylim[0] < 0 and ylim[1] > 0:
         plt.plot(plt.xlim(), [0, 0], "db--")
-    plt.title("Chip ID: {}".format(sensor.chip_id))
+    plt.title(sensor.name)
     plt.show()
 
 def plot_pm_vs_humidity(sensor):
@@ -311,7 +310,7 @@ def plot_pm_vs_humidity(sensor):
     plt.xlabel("humidity (%)")
     plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     plt.title("\n".join([
-        "Chip ID: {}".format(sensor.chip_id),
+        sensor.name,
         "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.humidity)[0])
     ]))
     plt.grid()
@@ -423,7 +422,7 @@ def plot_pm_vs_environment_hist(sensor, key="humidity"):
 
     ax_empty.axis("off")
     plt.suptitle("\n".join([
-        "chip ID: {}, period: {} - {}".format(sensor.chip_id,
+        "{}, period: {} - {}".format(sensor.name,
             sensor.data.index[0].date(), sensor.data.index[-1].date(),
         ),
         "measurements: {}, sampling median: {}".format(
@@ -446,7 +445,7 @@ def plot_pm_vs_temperature(sensor):
     plt.xlabel(r"temperature ($\mathrm{\degree C}$)")
     plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     plt.title("\n".join([
-        "Chip ID: {}".format(sensor.chip_id),
+        sensor.name,
         "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.temperature)[0])
     ]))
     plt.grid()

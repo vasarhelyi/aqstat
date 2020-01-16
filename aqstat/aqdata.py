@@ -18,12 +18,11 @@ class AQData(object):
 
     data_columns = "temperature humidity pm10 pm2_5".split()
 
-    def __init__(self, chip_id=None, metadata=AQMetaData(),
+    def __init__(self, metadata=AQMetaData(),
         data=DataFrame(columns=data_columns, index=to_datetime([])),
         date_start=None, date_end=None,
     ):
         self.metadata = metadata # metadata, useful descriptors
-        self.chip_id = chip_id # special property from metadata with convenience usage
         self.data = data.sort_index() # all the time series of AQ data as pandas DataFrame indexed by datetime
         if date_start is not None:
             self.data = self.data[self.data.index.date >= Timestamp(date_start)]
@@ -32,6 +31,7 @@ class AQData(object):
 
     def __repr__(self):
         return str({
+            "name": self.name,
             "chip_id": self.chip_id,
             "sensor_ids": self.sensor_ids,
             "data": self.data,
@@ -138,7 +138,7 @@ class AQData(object):
                     "humidity": SensorInfo("humidity", sensor_type.upper(), sensor_id),
                 })
 
-        return self(chip_id=chip_id, data=data, metadata=metadata,
+        return self(data=data, metadata=metadata,
             date_start=date_start, date_end=date_end)
 
     @property
@@ -186,6 +186,14 @@ class AQData(object):
             metadata=self.metadata.merge(other.metadata),
             data=data
         )
+
+    @property
+    def name(self):
+        return self.metadata.name
+
+    @name.setter
+    def name(self, value):
+        self.metadata.name = value
 
     @property
     def sensor_ids(self):

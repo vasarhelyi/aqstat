@@ -160,7 +160,7 @@ def parse_sensors_from_path(inputdir, chip_ids=None,
         # add new metadata to list
         i = find_sensor_with_id(sensors, chip_id=metadata.chip_id)
         if i is None:
-            sensors.append(AQData(chip_id=metadata.chip_id, metadata=metadata))
+            sensors.append(AQData(metadata=metadata))
         else:
             sensors[i].metadata.merge(metadata, inplace=True)
 
@@ -171,7 +171,7 @@ def parse_sensors_from_path(inputdir, chip_ids=None,
         # if we have sensor_id but no chip_id, try to infer chip_id from metadata
         if chip_id is None and sensor_id is not None:
             i = find_sensor_with_id(sensors, sensor_id=sensor_id)
-            if i:
+            if i is not None:
                 chip_id = sensors[i].chip_id
         # skip file if needed
         if chip_ids and chip_id not in chip_ids:
