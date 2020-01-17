@@ -2,16 +2,22 @@
 
 import click
 from itertools import combinations
+import matplotlib.pyplot as plt
+
+from pandas.plotting import register_matplotlib_converters
+from pandas import Timestamp
 
 from aqstat.parse import parse_ids_from_string_or_dir, \
     parse_sensors_from_path
+from aqstat.stat import time_delay_correlation
 
 @click.command()
 @click.argument("inputdir", type=click.Path(exists=True))
-@click.argument("chip-ids", required=False)
+@click.option("-i", "--chip-ids", default="", help="comma separated list of chip ids to plot.")
+@click.option("-n", "--names", default="", help="comma separated list of sensor names to plot (partial matches accepted)")
 @click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
-def test(inputdir, chip_ids=None, date_start=None, date_end=None):
+def test(inputdir, chip_ids="", names="", date_start=None, date_end=None):
     """Arbitrary tests on AQ data in INPUTDIR for sensors in CHIP_IDS.
 
     CHIP_IDS should be a comma separated list of integers.
@@ -19,26 +25,48 @@ def test(inputdir, chip_ids=None, date_start=None, date_end=None):
 
     """
 
-    # get list of chip IDs from option
+    # get list of chip IDs and names from option
     chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
+    names = names.split(",") if names else []
     # parse sensors from files
-    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids,
+    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids, names=names,
         date_start=date_start, date_end=date_end)
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()
 
-#     # print correlation between datasets
-#     for a, b in combinations(sensors, 2):
-#         print()
-#         print("Correlations between sensor ids {} and {}".format(
-#             a.sensor_id, b.sensor_id)
-#         )
-#         print(a.corrwith(b, tolerance=60))
+    # print correlation between datasets
+    print()
+    for a, b in combinations(sensors, 2):
+        print()
+        print("Correlations between chip ids {} and {}".format(
+            a.chip_id, b.chip_id)
+        )
+        print(a.corrwith(b, tolerance=60))
 
     # print main frequencies
+    print()
     for sensor in sensors:
         df = sensor.data.index.to_series().diff()
-        print("sensor_id\tmin\tmax\mean\tmedian")
-        print("\t".join(map(str, [sensor.sensor_id, df.min(), df.max(), df.mean(), df.median()])))
+        print("name\tchip_id\tmin\tmax\mean\tmedian")
+        print("\t".join(map(str, [sensor.name, sensor.chip_id, df.min(), df.max(), df.mean(), df.median()])))
 
+    # test time delay correlation
+    print()
+    starttime = Timestamp("2020-01-12T12")
+    endtime = Timestamp("2020-01-13T12")
+    col = "pm2_5"
+    for i, a in enumerate(sensors[:-1]):
+        for b in sensors[i + 1:]:
+            corr = time_delay_correlation(a.data[[col]], b.data[[col]],
+                dtmin="-3h", dtmax="3h", freq="1m",
+                starttime=starttime, endtime=endtime,
+            )
+            corr.plot()
+            plt.title("\n".join([
+                "{} - {}, {} time delay correlation".format(a.name, b.name, col),
+                "period: {} - {}".format(starttime, endtime),
+                "max: {:.2f} @ {}".format(corr[col].max(), corr[col].idxmax())
+            ]))
+            plt.savefig("{}_{}_{}.png".format(a.name, b.name, col))
+            plt.show()
