@@ -56,17 +56,20 @@ def test(inputdir, chip_ids="", names="", date_start=None, date_end=None):
     starttime = Timestamp("2020-01-12T12")
     endtime = Timestamp("2020-01-13T12")
     col = "pm2_5"
+    dtmax = "6h"
+    freq = "1m"
+    window = "1h"
     for i, a in enumerate(sensors[:-1]):
         for b in sensors[i + 1:]:
             corr = time_delay_correlation(a.data[[col]], b.data[[col]],
-                dtmin="-3h", dtmax="3h", freq="1m",
+                dtmin="-" + dtmax, dtmax=dtmax, freq=freq, window=window,
                 starttime=starttime, endtime=endtime,
             )
             corr.plot()
+            plt.ylim([0, 1])
             plt.title("\n".join([
                 "{} - {}, {} time delay correlation".format(a.name, b.name, col),
                 "period: {} - {}".format(starttime, endtime),
                 "max: {:.2f} @ {}".format(corr[col].max(), corr[col].idxmax())
             ]))
-            plt.savefig("{}_{}_{}.png".format(a.name, b.name, col))
-            plt.show()
+            plt.savefig("{}_{}_{}_{}.png".format(a.name, b.name, col, dtmax))
