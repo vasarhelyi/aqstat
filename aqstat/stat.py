@@ -57,6 +57,9 @@ def time_delay_correlation(a, b, dtmin, dtmax, freq, starttime=None,
     if window:
         aa = a.rolling(window=window).mean()
         bb = b.rolling(window=window).mean()
+    else:
+        aa = a
+        bb = b
     # cut to [starttime, endtime] allowing enough slack for shifting operation
     aa = aa[starttime + dtmin : endtime + dtmax]
     bb = bb[starttime - dtmax : endtime - dtmin]
