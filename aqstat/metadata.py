@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 import json
+import logging
 
 GPSCoordinate = namedtuple("GPSCoordinate", "lat lon amsl agl") # [deg deg m m]
 ContactInfo = namedtuple("ContactInfo", "name email phone")
@@ -19,6 +20,7 @@ class AQMetaData(object):
         self.description = description # [str]
         self.location = location # [GPSCoordinate]
         self.owner = owner # [ContactInfo]
+        self.merged = False
 
     def __repr__(self):
         return str(self.as_dict())
@@ -107,7 +109,8 @@ class AQMetaData(object):
         """Returns sensor metadata that is the union of self's and other's
         metadata. If there are properties where both are set, self's value
         is preserved. 'chip_id' and 'sensor_id' values are special in the sense
-        that they are explicitely checked to avoid merging different ones.
+        that they are explicitely checked to avoid merging different ones. If
+        this happens, self.merged gets True.
 
         Parameters:
             other (AQMetaData): metadata to unite self's metadata with
@@ -120,18 +123,20 @@ class AQMetaData(object):
         # check chip_ids
         chip_id = self.chip_id or other.chip_id
         if other.chip_id is not None and chip_id != other.chip_id:
-            raise ValueError("Cannot merge two datasets with different "
+            logging.warning("Merging two datasets with different "
                              "chip ids: {} and {}".format(
                 self.chip_id, other.chip_id))
+            self.merged = True
         # merge sensor descriptions
         sensors = dict(self.sensors)
         for key in other.sensors:
             if key in sensors:
                 sensor_id = sensors[key].sensor_id or other.sensors[key].sensor_id
                 if other.sensors[key].sensor_id is not None and sensor_id != other.sensors[key].sensor_id:
-                    raise ValueError("Cannot merge two {} sensors with different "
-                                     "sensor ids: {} and {}".format(
+                    logging.warning("Merging two {} sensors with different "
+                        "sensor ids: {} and {}".format(
                         key, sensors[key].sensor_id, other.sensors[key].sensor_id))
+                    self.merged = True
                 sensors[key] = SensorInfo(
                     name=key,
                     type=sensors[key].type or other.sensors[key].type,

@@ -10,6 +10,7 @@ from aqstat.plot import plot_daily_variation, plot_daily_variation_hist, \
     plot_pm_vs_temperature
 from aqstat.parse import parse_ids_from_string_or_dir, \
     parse_sensors_from_path
+from aqstat.utils import merge_sensors_with_shared_name
 
 
 
@@ -45,6 +46,8 @@ def plot(inputdir, chip_ids="", names="", date_start=None, date_end=None,
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()
+    # merge sensors with exactly the same name
+    sensors = merge_sensors_with_shared_name(sensors)
 
     # if no specific argument is given, plot everything
     all = not (particle or humidity or temperature or
