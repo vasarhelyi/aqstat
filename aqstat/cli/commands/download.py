@@ -8,7 +8,8 @@ import re
 import requests
 import zipfile
 
-from aqstat.parse import parse_ids_from_string_or_dir
+from aqstat.parse import create_id_dirs_from_json, \
+    parse_ids_from_string_or_dir, parse_sensors_from_path
 from aqstat.utils import last_day_of_month
 
 def download_madavi(outputdir, chip_ids, date_start, date_end):
@@ -132,7 +133,9 @@ def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
 @click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the download. Default is beginning of this or date-end's month.")
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the download. Default is now or end of date-start's month.")
 @click.option("--use-madavi", is_flag=True, help="use madavi.de as download source instead of the default archive.sensor.community")
-def download(outputdir, ids="", date_start=None, date_end=None, use_madavi=False):
+@click.option("--use-json", is_flag=True, help="parse all .json files found under OUTPUTDIR and create directories for all sensor IDs before download")
+def download(outputdir, ids="", date_start=None, date_end=None,
+    use_madavi=False, use_json=False):
     """Download luftdaten.info .csv files for the given IDS to OUTPUTDIR.
 
     Data is assumed to be and will be organized into subdirectories named
@@ -150,6 +153,11 @@ def download(outputdir, ids="", date_start=None, date_end=None, use_madavi=False
     specified.
 
     """
+    # create directories first if needed
+    if use_json:
+        create_id_dirs_from_json(outputdir, sensor_id=not use_madavi,
+            chip_id=use_madavi
+        )
     # get list of chip IDs from option or from subdirectory names
     ids = parse_ids_from_string_or_dir(ids, outputdir)
     if not ids:

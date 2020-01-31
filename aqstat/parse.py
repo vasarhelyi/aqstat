@@ -9,6 +9,25 @@ from pathlib import Path
 
 from .utils import find_sensor_with_id
 
+def create_id_dirs_from_json(outputdir, sensor_id=False, chip_id=False):
+    """Create subdirectories under outputdir for all IDs found in .json
+    metadata files under outputdir.
+
+    """
+    sensors = parse_sensors_from_path(outputdir, chip_ids=[], names=[],
+        only_metadata=True
+    )
+    for sensor in sensors:
+        if sensor_id:
+            for sid in sensor.sensor_ids:
+                os.makedirs(os.path.join(outputdir, str(sid)),
+                    exist_ok=True
+                )
+        if chip_id:
+            os.makedirs(os.path.join(outputdir, str(sensor.chip_id)),
+                exist_ok=True
+            )
+
 def parse_metadata_from_madavi_csv_filename(filename):
     """Parse chip_id and date from a raw madavi.de AQ .csv filename.
 
@@ -123,7 +142,7 @@ def parse_sensorcommunity_csv(filename):
     )
 
 def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
-    date_start=None, date_end=None
+    date_start=None, date_end=None, only_metadata=False
 ):
     """Parse all sensor data and metadata for the given chip_ids in the given
     period from inputdir.
@@ -138,9 +157,13 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
             If empty (and chip_ids is empty, too), parse all sensors found.
         date_start (datetime): starting date limit or None if not used
         date_end (datetime): ending date limit or None if not used
+        only_metadata (bool): should we parse only metadata or data as well?
 
     Return:
-        list of AQData objects separated by chip id
+        list of AQData objects separated by chip id. If only_metadata is used,
+        the returned objects will contain no data. If it is not used, only
+        those sensors will be returned that contain actual data.
+
     """
 
     # import here to avoid circular imports
@@ -174,6 +197,10 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
     # if names was specified but no matches are found, we quit here
     if names and not chip_ids:
         return []
+
+    # if only metadata is needed, we quit here
+    if only_metadata:
+        return sensors
 
     # parse all data separated according to sensors
     for filename in sorted(Path(inputdir).glob("**/*.csv")):
