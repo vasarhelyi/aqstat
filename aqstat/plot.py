@@ -321,6 +321,9 @@ def plot_pm(sensor, gsod=None, window=None):
         a02.plot(gsod.index, gsod.MXSPD, 'o-g', ms=3)
         a02.set_ylim([0, None])
         a02.set_ylabel("wind (m/s)", color='g')
+        a02.spines['right'].set_color('g')
+        a02.tick_params(axis='y', colors='g')
+        a02.legend()
     # use rolling window if needed
     if window:
         data = sensor.data.rolling(window=window).mean()
@@ -338,15 +341,15 @@ def plot_pm(sensor, gsod=None, window=None):
     a1.set_ylim(sensor_ranges["pm10"])
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
-    plt.legend()
-    plt.title(r"PM10 polluted days: {}/{}".format(
+    a1.legend()
+    a1.set_title(r"PM10 polluted days: {}/{}".format(
         daily_data.pm10[daily_data.pm10 > pm_limits["PM10 daily health limit"][0]].count(),
         len(daily_data),
     ))
-    suptitle = sensor.name
+    title = sensor.name
     if window:
-        suptitle += ("\nrolling window: {}".format(window))
-    plt.suptitle(suptitle)
+        title += ("\nrolling window: {}".format(window))
+    a0.set_title(title)
     plt.show()
 
 def plot_pm_ratio(sensor):
