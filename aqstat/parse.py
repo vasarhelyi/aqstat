@@ -200,11 +200,10 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
                 geo_center[0], geo_center[1],
                 metadata.location.lat, metadata.location.lon) > geo_radius:
             continue
-        # add chip_id if name matches
-        if names and True in [name in metadata.name for name in names]:
-            if metadata.chip_id not in chip_ids:
-                chip_ids.append(metadata.chip_id)
-        # skip chip id if needed
+        # skip if names are defined and there is no match
+        if names and True not in [name in metadata.name for name in names]:
+            continue
+        # skip if chip id list is defined and we are not on it
         if chip_ids and metadata.chip_id not in chip_ids:
             continue
         # add new metadata to list
@@ -214,12 +213,8 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
         else:
             sensors[i].metadata.merge(metadata, inplace=True)
 
-    # if names was specified but no matches are found, we quit here
-    if names and not chip_ids:
-        return []
-
-    # if only metadata is needed, we quit here
-    if only_metadata:
+    # if only metadata is needed or we found nothing, we quit here
+    if (not sensors) or only_metadata:
         return sensors
 
     # update chip_ids with all sensors that we need to have a full list
