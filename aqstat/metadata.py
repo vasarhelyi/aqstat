@@ -65,7 +65,7 @@ class AQMetaData(object):
             a new AQMetaData class with parsed metadata
         """
         # parse metadata
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding='utf-8') as f:
             metadata = json.load(f)
 
         # parse name
