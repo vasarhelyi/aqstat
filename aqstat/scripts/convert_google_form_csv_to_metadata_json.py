@@ -36,12 +36,12 @@ def main(inputfile="", outputdir=""):
         name = d["Név"]
         email = d["E-mail"]
         phone = d["Telefonszám"]
-        chip_id=d["device ID"]
+        chip_id=int(d["device ID"]) if d["device ID"] == d["device ID"] else None
         description=d["Az érzékelő elhelyezése"]
         lat, lon = [float(x.strip()) for x in d["Az érzékelő helyének koordinátái"].split(",")]
-        amsl = d["AMSL"]
-        agl = d["Az érzékelő magassága a földtől (AGL)"]
-        sensor_id = d["sensor ID"]
+        amsl = float(d["AMSL"])
+        agl = float(d["Az érzékelő magassága a földtől (AGL)"])
+        sensor_id = int(d["sensor ID"]) if d["sensor ID"] == d["sensor ID"] else None
         sensors = {
             "pm10": SensorInfo("pm10", d["Szállópor érzékelő típusa"], sensor_id),
             "pm2_5": SensorInfo("pm2_5", d["Szállópor érzékelő típusa"], sensor_id),

@@ -5,7 +5,6 @@ from pandas import DataFrame, Timedelta, Timestamp, to_datetime, merge
 
 from .parse import parse_metadata_from_filename, parse_madavi_csv, \
     parse_sensorcommunity_csv
-
 from .metadata import AQMetaData, SensorInfo
 
 class AQData(object):

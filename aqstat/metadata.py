@@ -150,10 +150,10 @@ class AQMetaData(object):
                 sensors[key] = other.sensors[key]
         # prepare location
         location = GPSCoordinate(
-            lat=self.location.lat or other.location.lat,
-            lon=self.location.lon or other.location.lon,
-            amsl=self.location.amsl or other.location.amsl,
-            agl=self.location.agl or other.location.agl,
+            lat=self.location.lat if self.location.lat not in [None, float('nan')] else other.location.lat,
+            lon=self.location.lon if self.location.lon not in [None, float('nan')] else other.location.lon,
+            amsl=self.location.amsl if self.location.amsl not in [None, float('nan')] else other.location.amsl,
+            agl=self.location.agl if self.location.agl not in [None, float('nan')] else other.location.agl,
         )
         # prepare owner
         owner = ContactInfo(
