@@ -5,7 +5,7 @@ import logging
 
 from aqstat.plot import plot_daily_variation, plot_daily_variation_hist, \
     plot_humidity, plot_multiple_pm, plot_multiple_humidity, \
-    plot_multiple_temperature, plot_pm, plot_pm_ratio, \
+    plot_multiple_temperature, plot_multiple_altitude, plot_pm, plot_pm_ratio, \
     plot_temperature, plot_pm_vs_environment_hist, plot_pm_vs_humidity, \
     plot_pm_vs_temperature
 from aqstat.parse import parse_ids_from_string_or_dir, \
@@ -20,15 +20,18 @@ from aqstat.utils import merge_sensors_with_shared_name
 @click.option("-n", "--names", default="", help="comma separated list of sensor names to plot (partial matches accepted)")
 @click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
-@click.option("-p", "--particle", is_flag=True, help="plot PM data")
-@click.option("-h", "--humidity", is_flag=True, help="plot humidity data")
-@click.option("-t", "--temperature", is_flag=True, help="plot temperature data")
-@click.option("-mp", "--multiple-particle", is_flag=True, help="plot multiple PM data")
-@click.option("-mh", "--multiple-humidity", is_flag=True, help="plot multiple humidity data")
-@click.option("-mt", "--multiple-temperature", is_flag=True, help="plot multiple temperature data")
+@click.option("-p", "--particle", is_flag=True, help="plot PM-related data")
+@click.option("-h", "--humidity", is_flag=True, help="plot humidity-related data")
+@click.option("-t", "--temperature", is_flag=True, help="plot temperature-related data")
+@click.option("-mp", "--multiple-particle", is_flag=True, help="plot PM-related data for multiple sensors together")
+@click.option("-mh", "--multiple-humidity", is_flag=True, help="plot humidity-related data for multiple sensors together")
+@click.option("-mt", "--multiple-temperature", is_flag=True, help="plot temperature-related data for multiple sensors together")
+@click.option("-ma", "--multiple-altitude", is_flag=True, help="plot altitude-related data for multiple sensors together")
 def plot(inputdir, chip_ids="", names="", date_start=None, date_end=None,
     particle=False, humidity=False, temperature=False, multiple_particle=False,
-    multiple_humidity=False, multiple_temperature=False):
+    multiple_humidity=False, multiple_temperature=False,
+    multiple_altitude=False,
+):
     """Plot AQ data in various ways from all .csv files in the directory tree
     under INPUTDIR
 
@@ -51,7 +54,8 @@ def plot(inputdir, chip_ids="", names="", date_start=None, date_end=None,
 
     # if no specific argument is given, plot everything
     all = not (particle or humidity or temperature or
-        multiple_particle or multiple_humidity or multiple_temperature)
+        multiple_particle or multiple_humidity or multiple_temperature or
+        multiple_altitude)
 
     # plot individual sensor data
     for sensor in sensors:
@@ -101,3 +105,5 @@ def plot(inputdir, chip_ids="", names="", date_start=None, date_end=None,
             plot_multiple_humidity(sensors)
         if all or multiple_temperature:
             plot_multiple_temperature(sensors)
+        if all or multiple_altitude:
+            plot_multiple_altitude(sensors)

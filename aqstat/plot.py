@@ -148,6 +148,51 @@ def plot_humidity(sensor):
     plt.title(sensor.name)
     plt.show()
 
+def plot_multiple_altitude(sensors):
+    """Plot averaged sensor data as a function of altitude from multiple sensors.
+
+    Parameters:
+        sensors (list(AQData)): the sensors containing the dataset to plot
+
+    """
+    ax = plt.figure().gca()
+    for key in ["temperature", "humidity", "pm10", "pm2_5", "pm2_5_calib"]:
+        x = []
+        y = []
+        yerr = []
+        names = []
+        for sensor in sensors:
+            xx = sensor.metadata.location.amsl + sensor.metadata.location.agl
+            yy = sensor.data[key].mean()
+            yyerr = sensor.data[key].std()
+            if xx != xx or yy != yy or yyerr != yyerr:
+                continue
+            if not x:
+                date_start = sensor.data.index[0].date()
+                date_end = sensor.data.index[-1].date()
+            else:
+                date_start = min(date_start, sensor.data.index[0].date())
+                date_end = max(date_end, sensor.data.index[-1].date())
+            x.append(xx)
+            y.append(yy)
+            yerr.append(yyerr)
+            names.append(sensor.name)
+            print(sensor.name, xx, yy, yyerr)
+            plt.text(xx, yy, "  " + sensor.name, va='center_baseline')
+        plt.errorbar(x, y, yerr=yerr, fmt='bo')
+        plt.xlabel("Above mean sea level (m)")
+        plt.ylabel(key)
+        # plot linear fit
+        coef = np.polyfit(x, y, 1)
+        poly1d_fn = np.poly1d(coef)
+        plt.plot(x, poly1d_fn(x), 'r--')
+        plt.title("\n".join([
+            "period: {} - {}".format(date_start, date_end),
+            "linear fit: {} = {:g} * altitude {} {:g}".format(
+            key, coef[0], "+" if coef[1] >= 0 else "-", abs(coef[1])
+        )]))
+        plt.show()
+
 def plot_multiple_humidity(sensors):
     """Plot time series of humidity data from multiple sensors.
 
