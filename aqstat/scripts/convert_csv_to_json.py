@@ -42,7 +42,6 @@ def main(inputfile="", outputdir=""):
         amsl = d["AMSL"]
         agl = d["Az érzékelő magassága a földtől (AGL)"]
         sensor_id = d["sensor ID"]
-        print(chip_id)
         sensors = {
             "pm10": SensorInfo("pm10", d["Szállópor érzékelő típusa"], sensor_id),
             "pm2_5": SensorInfo("pm2_5", d["Szállópor érzékelő típusa"], sensor_id),

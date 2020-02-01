@@ -16,7 +16,7 @@ class AQData(object):
 
     """
 
-    data_columns = "temperature humidity pm10 pm2_5".split()
+    data_columns = "temperature humidity pressure pm10 pm2_5".split()
 
     def __init__(self, metadata=AQMetaData(),
         data=DataFrame(columns=data_columns, index=to_datetime([])),
@@ -129,13 +129,22 @@ class AQData(object):
                     "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
                     "pm2_5": SensorInfo("pm2_5", sensor_type.upper(), sensor_id),
                 })
-            elif sensor_type in ["dht22", "bme280"]:
+            elif sensor_type == "dht22":
                 data = raw_data[["temperature", "humidity"]]
                 data.columns = ["temperature", "humidity"]
                 data.reindex(self.data_columns)
                 metadata = AQMetaData(sensors={
                     "temperature": SensorInfo("temperature", sensor_type.upper(), sensor_id),
                     "humidity": SensorInfo("humidity", sensor_type.upper(), sensor_id),
+                })
+            elif sensor_type == "bme280":
+                data = raw_data[["temperature", "humidity", "pressure"]]
+                data.columns = ["temperature", "humidity", "pressure"]
+                data.reindex(self.data_columns)
+                metadata = AQMetaData(sensors={
+                    "temperature": SensorInfo("temperature", sensor_type.upper(), sensor_id),
+                    "humidity": SensorInfo("humidity", sensor_type.upper(), sensor_id),
+                    "pressure": SensorInfo("pressure", sensor_type.upper(), sensor_id),
                 })
 
         return self(data=data, metadata=metadata,

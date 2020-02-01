@@ -194,6 +194,7 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
         else:
             sensors[i].metadata.merge(metadata, inplace=True)
 
+
     # if names was specified but no matches are found, we quit here
     if names and not chip_ids:
         return []
