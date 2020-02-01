@@ -28,6 +28,53 @@ def create_id_dirs_from_json(outputdir, sensor_id=False, chip_id=False):
                 exist_ok=True
             )
 
+def parse_gsod_data(filename):
+    """Parse Global Summary of the Day (GSOD) data from a comma separated
+    .txt file.
+
+    Source: https://www7.ncdc.noaa.gov/CDO/cdoselect.cmd?datasetabbv=GSOD&countryabbv=&georegionabbv=
+
+    Format Specification: https://www7.ncdc.noaa.gov/CDO/GSOD_DESC.txt
+
+    Parameters:
+        filename(Path): the .txt/.csv file to parse
+
+    Return:
+        pandas DataFrame containing GSOD meteorological data converted into
+        SI units (Fahrenheit -> Celsius, miles -> m, knots -> m/s)
+
+    """
+    # parse .csv
+    data = read_csv(filename, sep=",", parse_dates=["YEARMODA"],
+        index_col="YEARMODA", infer_datetime_format=True,
+        skipinitialspace=True
+    )
+    # remove space from end of column names (reserved for flag indent)
+    data.columns = [x.strip() for x in data.columns]
+    # remove '*' flag from MAX and MIN
+    for key in ["MAX", "MIN"]:
+        data[key] = data[key].map(lambda x: float(x.strip("*")))
+    # remove missing data
+    for key in ["WBAN"]:
+        data[key].replace({99999: None}, inplace=True)
+    for key in ["TEMP", "DEWP", "SLP", "STP", "MAX", "MIN"]:
+        data[key].replace({9999.9: None}, inplace=True)
+    for key in ["VISIB", "WDSP", "MXSPD", "GUST", "SNDP"]:
+        data[key].replace({999.9: None}, inplace=True)
+    for key in ["PRCP"]:
+        data[key].replace({99.99: None}, inplace=True)
+    # convert Fahrenheit to Celsius
+    for key in ["TEMP", "DEWP", "MAX", "MIN"]:
+        data[key] = (data[key] - 32) / 1.8
+    # convert miles to meters
+    for key in ["VISIB"]:
+        data[key] = data[key] * 1609.344
+    # convert knots to m/s
+    for key in ["WDSP", "MXSPD", "GUST"]:
+        data[key] = data[key] * 0.51444444444444
+
+    return data
+
 def parse_metadata_from_madavi_csv_filename(filename):
     """Parse chip_id and date from a raw madavi.de AQ .csv filename.
 

@@ -9,7 +9,7 @@ from aqstat.plot import plot_daily_variation, plot_daily_variation_hist, \
     plot_multiple_temperature, plot_multiple_altitude, plot_pm, plot_pm_ratio, \
     plot_temperature, plot_pm_vs_environment_hist, plot_pm_vs_humidity, \
     plot_pm_vs_temperature
-from aqstat.parse import parse_ids_from_string_or_dir, \
+from aqstat.parse import parse_gsod_data, parse_ids_from_string_or_dir, \
     parse_sensors_from_path
 from aqstat.utils import merge_sensors_with_shared_name
 
@@ -17,6 +17,9 @@ from aqstat.utils import merge_sensors_with_shared_name
 
 @click.command()
 @click.argument("inputdir", type=click.Path(exists=True))
+
+@optgroup.group("Input data", help="Use these options to define what kind of input data to use")
+@optgroup.option("--gsod", type=click.Path(exists=True), help="define GSOD .csv file to use in the analysis")
 
 @optgroup.group("Input data filters", help="Use these options to create spatial, temporal or ID-based filters on the data to be visualized")
 @optgroup.option("-i", "--chip-ids", metavar="ID1,ID2,..", default="", help="comma separated list of chip ids to plot.")
@@ -36,7 +39,7 @@ from aqstat.utils import merge_sensors_with_shared_name
 @optgroup.option("-mt", "--multiple-temperature", is_flag=True, help="plot temperature-related data for multiple sensors together")
 @optgroup.option("-ma", "--multiple-altitude", is_flag=True, help="plot altitude-related data for multiple sensors together")
 
-def plot(inputdir, chip_ids="",
+def plot(inputdir, gsod="", chip_ids="",
     names="", exclude_names ="",
     geo_center="", geo_radius=None,
     date_start=None, date_end=None,
@@ -59,6 +62,7 @@ def plot(inputdir, chip_ids="",
     # prepare geolocation based parameters
     geo_center = [float(x) for x in geo_center.split(",")][:2] if geo_center \
         else None
+
     # parse sensors from files
     sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids,
         names=names, exclude_names=exclude_names,
@@ -69,6 +73,11 @@ def plot(inputdir, chip_ids="",
         sensor.calibrate()
     # merge sensors with exactly the same name
     sensors = merge_sensors_with_shared_name(sensors)
+
+    # parse gsod data
+    if gsod:
+        gsod = parse_gsod_data(gsod)
+        print(gsod)
 
     # if no specific argument is given, plot everything
     all = not (particle or humidity or temperature or
