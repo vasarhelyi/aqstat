@@ -18,6 +18,7 @@ from aqstat.utils import merge_sensors_with_shared_name
 @click.argument("inputdir", type=click.Path(exists=True))
 @click.option("-i", "--chip-ids", default="", help="comma separated list of chip ids to plot.")
 @click.option("-n", "--names", default="", help="comma separated list of sensor names to plot (partial matches accepted)")
+@click.option("-x", "--exclude-names", default="", help="comma separated list of sensor names NOT to plot (partial matches accepted)")
 @click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
 @click.option("-p", "--particle", is_flag=True, help="plot PM-related data")
@@ -27,10 +28,10 @@ from aqstat.utils import merge_sensors_with_shared_name
 @click.option("-mh", "--multiple-humidity", is_flag=True, help="plot humidity-related data for multiple sensors together")
 @click.option("-mt", "--multiple-temperature", is_flag=True, help="plot temperature-related data for multiple sensors together")
 @click.option("-ma", "--multiple-altitude", is_flag=True, help="plot altitude-related data for multiple sensors together")
-def plot(inputdir, chip_ids="", names="", date_start=None, date_end=None,
-    particle=False, humidity=False, temperature=False, multiple_particle=False,
-    multiple_humidity=False, multiple_temperature=False,
-    multiple_altitude=False,
+def plot(inputdir, chip_ids="", names="", exclude_names = "", date_start=None,
+    date_end=None, particle=False, humidity=False, temperature=False,
+    multiple_particle=False, multiple_humidity=False,
+    multiple_temperature=False, multiple_altitude=False,
 ):
     """Plot AQ data in various ways from all .csv files in the directory tree
     under INPUTDIR
@@ -43,9 +44,10 @@ def plot(inputdir, chip_ids="", names="", date_start=None, date_end=None,
     # get list of chip IDs and names from option
     chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
     names = names.split(",") if names else []
+    exclude_names = exclude_names.split(",") if exclude_names else []
     # parse sensors from files
     sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids, names=names,
-        date_start=date_start, date_end=date_end)
+        exclude_names=exclude_names, date_start=date_start, date_end=date_end)
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()

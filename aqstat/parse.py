@@ -141,7 +141,7 @@ def parse_sensorcommunity_csv(filename):
         skipinitialspace=True
     )
 
-def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
+def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
     date_start=None, date_end=None, only_metadata=False
 ):
     """Parse all sensor data and metadata for the given chip_ids in the given
@@ -151,10 +151,14 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
         inputdir (Path): the path where sensor data and metadata is found.
             All .csv are treated as sensor data,
             all .json are treated as metadata.
-        chip_ids (list): list of chip_ids to be parsed.
-            If empty (and names is empty, too), parse all sensors found.
+        chip_ids (list): list of chip_ids to be parsed. If empty (and names
+            and exclude_names is empty, too), parse all sensors found.
         names (list): list of sensor names to be parsed (partial match accepted)
-            If empty (and chip_ids is empty, too), parse all sensors found.
+            If empty (and chip_ids and exclude_names is empty, too), parse all
+            sensors found.
+        exclude_names (list): list of sensor names NOT to be parsed (partial
+            match accepted) If empty (and chip_ids and names is empty, too),
+            parse all sensors found.
         date_start (datetime): starting date limit or None if not used
         date_end (datetime): ending date limit or None if not used
         only_metadata (bool): should we parse only metadata or data as well?
@@ -180,6 +184,9 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
         # parse metadata file
         logging.info("Parsing {}".format(filename))
         metadata = AQMetaData.from_json(filename)
+        # skip if exclude_names matches
+        if exclude_names and True in [name in metadata.name for name in exclude_names]:
+            continue
         # add chip_id if name matches
         if names and True in [name in metadata.name for name in names]:
             if metadata.chip_id not in chip_ids:
@@ -194,7 +201,6 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
         else:
             sensors[i].metadata.merge(metadata, inplace=True)
 
-
     # if names was specified but no matches are found, we quit here
     if names and not chip_ids:
         return []
@@ -202,6 +208,11 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
     # if only metadata is needed, we quit here
     if only_metadata:
         return sensors
+
+    # update chip_ids with all sensors that we need to have a full list
+    # note that this also means that we assume that metadata exists for all
+    # chip ids
+    chip_ids = [sensor.chip_id for sensor in sensors]
 
     # parse all data separated according to sensors
     for filename in sorted(Path(inputdir).glob("**/*.csv")):
@@ -212,8 +223,8 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
             i = find_sensor_with_id(sensors, sensor_id=sensor_id)
             if i is not None:
                 chip_id = sensors[i].chip_id
-        # skip file if needed
-        if chip_ids and chip_id not in chip_ids:
+        # skip file if it does not match
+        if chip_id not in chip_ids:
             continue
         if date and date_start and date < date_start:
             continue
@@ -226,9 +237,7 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[],
         )
         # add current sensor data to existing list
         i = find_sensor_with_id(sensors, chip_id=chip_id, sensor_id=sensor_id)
-        if i is None:
-            sensors.append(newsensor)
-        else:
+        if i is not None:
             sensors[i].merge(newsensor, inplace=True)
 
     return [s for s in sensors if not s.data.empty]

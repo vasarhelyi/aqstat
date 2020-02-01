@@ -177,7 +177,6 @@ def plot_multiple_altitude(sensors):
             y.append(yy)
             yerr.append(yyerr)
             names.append(sensor.name)
-            print(sensor.name, xx, yy, yyerr)
             plt.text(xx, yy, "  " + sensor.name, va='center_baseline')
         plt.errorbar(x, y, yerr=yerr, fmt='bo')
         plt.xlabel("Above mean sea level (m)")
