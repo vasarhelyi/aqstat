@@ -74,10 +74,11 @@ def plot(inputdir, gsod="", chip_ids="",
     # merge sensors with exactly the same name
     sensors = merge_sensors_with_shared_name(sensors)
 
-    # parse gsod data
+    # parse gsod data if given
     if gsod:
         gsod = parse_gsod_data(gsod)
-        print(gsod)
+    else:
+        gsod = None
 
     # if no specific argument is given, plot everything
     all = not (particle or humidity or temperature or
@@ -89,8 +90,8 @@ def plot(inputdir, gsod="", chip_ids="",
         # plot PM data
         if all or particle:
             if sensor.data.pm10.count() or sensor.data.pm2_5.count():
-                plot_pm(sensor)
-                plot_pm(sensor, "1h")
+                plot_pm(sensor, gsod)
+                plot_pm(sensor, gsod, window="1h")
                 plot_pm_ratio(sensor)
                 plot_daily_variation(sensor, ["pm10", "pm2_5", "pm2_5_calib"])
                 plot_daily_variation_hist(sensor, keys=["pm10"], mins=[75])

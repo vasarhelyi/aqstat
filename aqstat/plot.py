@@ -293,19 +293,21 @@ def plot_multiple_temperature(sensors):
     plt.legend()
     plt.show()
 
-def plot_pm(sensor, window=None):
+def plot_pm(sensor, gsod=None, window=None):
     """Plot time series of PM10 + PM2.5 data.
 
     Parameters:
         sensor (AQData): the sensor containing the dataset to plot
+        gsod (DataFrame): GSOD data to use for the plot
         window(int|offset): size of moving window averaging or None if not used.
 
     """
-    # TODO: use resample instead
+    # create daily data
     daily_data = sensor.data.resample('d').mean()
-    high_humidity = sensor.data.humidity > humidity_threshold
-
+    # create subplots
     f, (a0, a1) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [1, 5]})
+    # create humidity plot
+    high_humidity = sensor.data.humidity > humidity_threshold
     a0.plot(sensor.data.index, masked_where(1 - high_humidity, sensor.data.humidity), 'r', ms=1)
     a0.plot(sensor.data.index, masked_where(high_humidity, sensor.data.humidity), 'b', ms=1)
     highlight(sensor.data.index, high_humidity, a0)
@@ -313,6 +315,12 @@ def plot_pm(sensor, window=None):
     a0.set_yticks([0, humidity_threshold, 100])
     a0.grid(axis='y')
     a0.set_ylabel("humidity (%)")
+    # create wind plot
+    if gsod is not None:
+        a02 = a0.twinx()
+        a02.plot(gsod.index, gsod.MXSPD, 'o-g', ms=3)
+        a02.set_ylim([0, None])
+        a02.set_ylabel("wind (m/s)", color='g')
     # use rolling window if needed
     if window:
         data = sensor.data.rolling(window=window).mean()
