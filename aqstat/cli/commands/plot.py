@@ -120,6 +120,8 @@ def plot(inputdir, chip_ids="",
             plot_multiple_pm(sensors, keys=["pm10"], window="1h")
             plot_multiple_pm(sensors, keys=["pm2_5"])
             plot_multiple_pm(sensors, keys=["pm2_5"], window="1h")
+            plot_multiple_pm(sensors, keys=["pm2_5_calib"])
+            plot_multiple_pm(sensors, keys=["pm2_5_calib"], window="1h")
         if all or multiple_humidity:
             plot_multiple_humidity(sensors)
         if all or multiple_temperature:

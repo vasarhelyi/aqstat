@@ -164,7 +164,7 @@ def plot_multiple_altitude(sensors):
         names = []
         counts = []
         for sensor in sensors:
-            xx = sensor.metadata.location.amsl + sensor.metadata.location.agl
+            xx = sensor.altitude
             yy = sensor.data[key].mean()
             yyerr = sensor.data[key].std()
             count = len(sensor.data[key])
@@ -229,17 +229,23 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None
 
     """
     ax = plt.figure().gca()
-    for sensor in sensors:
+    for sensor in sorted(sensors, key=lambda x: x.altitude, reverse=True):
         if window:
             data = sensor.data.rolling(window=window).mean()
         else:
             data = sensor.data
         if "pm10" in keys:
-            data.plot(y="pm10", label="{} PM10".format(sensor.name), ax=ax)
+            data.plot(y="pm10", label="{} PM10 @ {}m".format(
+                sensor.name, sensor.altitude), ax=ax
+            )
         if "pm2_5" in keys:
-            data.plot(y="pm2_5", label="{} PM2.5".format(sensor.name), ax=ax)
+            data.plot(y="pm2_5", label="{} PM2.5 @ {}m".format(
+                sensor.name, sensor.altitude), ax=ax
+            )
         if "pm2_5_calib" in keys:
-            data.plot(y="pm2_5_calib", label="{} PM2.5 calib".format(sensor.name), ax=ax)
+            data.plot(y="pm2_5_calib", label="{} PM2.5 calib @ {}m".format(
+                sensor.name, sensor.altitude), ax=ax
+            )
         plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     if "pm10" in keys:
         for label in [x for x in pm_limits if x.startswith("PM10")]:
@@ -254,6 +260,7 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None
     if window:
         plt.title("rolling window: {}".format(window))
     plt.grid(axis='y')
+    ax.set_ylim([0, None])
     plt.legend()
     plt.show()
 

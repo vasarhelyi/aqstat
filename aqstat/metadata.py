@@ -25,6 +25,10 @@ class AQMetaData(object):
     def __repr__(self):
         return str(self.as_dict())
 
+    @property
+    def altitude(self):
+        return self.location.amsl + self.location.agl
+
     def as_dict(self):
         """Create a dictionary representation of self."""
         ret = {}
