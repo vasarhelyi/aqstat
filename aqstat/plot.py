@@ -272,11 +272,12 @@ def plot_multiple_temperature(sensors):
     plt.legend()
     plt.show()
 
-def plot_pm(sensor):
+def plot_pm(sensor, window=None):
     """Plot time series of PM10 + PM2.5 data.
 
     Parameters:
         sensor (AQData): the sensor containing the dataset to plot
+        window(int|offset): size of moving window averaging or None if not used.
 
     """
     # TODO: use resample instead
@@ -291,10 +292,15 @@ def plot_pm(sensor):
     a0.set_yticks([0, humidity_threshold, 100])
     a0.grid(axis='y')
     a0.set_ylabel("humidity (%)")
-
-    sensor.data.plot(y="pm10", color="steelblue", label="PM10 (avg={:.1f})".format(sensor.data.pm10.mean()), ax=a1)
-    sensor.data.plot(y="pm2_5", color="orange", label="PM2.5 (avg={:.1f})".format(sensor.data.pm2_5.mean()), ax=a1)
-    sensor.data.plot(y="pm2_5_calib", color="olivedrab", label="PM2.5_calib (avg={:.1f})".format(sensor.data.pm2_5_calib.mean()), ax=a1)
+    # use rolling window if needed
+    if window:
+        data = sensor.data.rolling(window=window).mean()
+    else:
+        data = sensor.data
+    # plot data
+    data.plot(y="pm10", color="steelblue", label="PM10 (avg={:.1f})".format(sensor.data.pm10.mean()), ax=a1)
+    data.plot(y="pm2_5", color="orange", label="PM2.5 (avg={:.1f})".format(sensor.data.pm2_5.mean()), ax=a1)
+    data.plot(y="pm2_5_calib", color="olivedrab", label="PM2.5_calib (avg={:.1f})".format(sensor.data.pm2_5_calib.mean()), ax=a1)
     daily_data.plot(y="pm10", color="darkblue", marker="o", linestyle="", label="daily PM10 avg", ax=a1)
     daily_data.plot(y="pm2_5", color="red", marker="o", linestyle="", label="daily PM2.5 avg", ax=a1)
     daily_data.plot(y="pm2_5_calib", color="darkgreen", marker="o", linestyle="", label="daily calibrated PM2.5 avg", ax=a1)
@@ -303,6 +309,7 @@ def plot_pm(sensor):
             color=pm_limits[label][1], linestyle='--', label=label
         )
     highlight(sensor.data.index, high_humidity, a1)
+    a1.set_ylim(sensor_ranges["pm10"])
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
     plt.legend()
@@ -310,8 +317,10 @@ def plot_pm(sensor):
         daily_data.pm10[daily_data.pm10 > pm_limits["PM10 daily health limit"][0]].count(),
         len(daily_data),
     ))
-    a1.set_ylim(sensor_ranges["pm10"])
-    plt.suptitle(sensor.name)
+    suptitle = sensor.name
+    if window:
+        suptitle += ("\nrolling window: {}".format(window))
+    plt.suptitle(suptitle)
     plt.show()
 
 def plot_pm_ratio(sensor):

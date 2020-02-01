@@ -81,6 +81,7 @@ def plot(inputdir, chip_ids="",
         if all or particle:
             if sensor.data.pm10.count() or sensor.data.pm2_5.count():
                 plot_pm(sensor)
+                plot_pm(sensor, "1h")
                 plot_pm_ratio(sensor)
                 plot_daily_variation(sensor, ["pm10", "pm2_5", "pm2_5_calib"])
                 plot_daily_variation_hist(sensor, keys=["pm10"], mins=[75])
