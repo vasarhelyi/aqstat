@@ -148,10 +148,6 @@ def download(outputdir, ids="", date_start=None, date_end=None,
     If no IDS are given, they will be inferred from directory names
     under OUTPUTDIR.
 
-    DATE_START and DATE_END define the date range to look for.
-    Default is this month if nothing specified, the given month if only half is
-    specified.
-
     """
     # create directories first if needed
     if use_json:

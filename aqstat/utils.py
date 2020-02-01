@@ -1,6 +1,7 @@
 """Arbitrary helper functions to be used in aqstat."""
 
 from datetime import timedelta
+from math import atan2, cos, radians, sin, sqrt
 
 def find_sensor_with_id(sensors, chip_id=None, sensor_id=None):
     """Find a sensor index with first matching chip_id or sensor_id.
@@ -23,6 +24,34 @@ def find_sensor_with_id(sensors, chip_id=None, sensor_id=None):
                 if sid == sensor_id:
                     return i
     return None
+
+def latlon_distance(lat1, lon1, lat2, lon2):
+    """Return distance between two geographical points.
+
+    Source: http://www.movable-type.co.uk/scripts/latlong.html
+
+    Parameters:
+        lat1(float): latitude of first coordinate [deg].
+        lon1(float): longitude of first coordinate [deg].
+        lat2(float): latitude of second coordinate [deg].
+        lon2(float): longitude of second coordinate [deg].
+
+    Return:
+        distance between two points in [m].
+
+    """
+    radius_of_earth = 6378137.0
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
+    lon1 = radians(lon1)
+    lon2 = radians(lon2)
+    dLat = lat2 - lat1
+    dLon = lon2 - lon1
+
+    a = sin(0.5 * dLat)**2 + sin(0.5 * dLon)**2 * cos(lat1) * cos(lat2)
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    return radius_of_earth * c
 
 def last_day_of_month(any_day):
     """Return the last day of month from a given date."""

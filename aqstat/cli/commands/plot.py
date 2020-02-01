@@ -1,6 +1,7 @@
 """Implementation of the 'plot' command for AQstat."""
 
 import click
+from click_option_group import optgroup
 import logging
 
 from aqstat.plot import plot_daily_variation, plot_daily_variation_hist, \
@@ -16,20 +17,30 @@ from aqstat.utils import merge_sensors_with_shared_name
 
 @click.command()
 @click.argument("inputdir", type=click.Path(exists=True))
-@click.option("-i", "--chip-ids", default="", help="comma separated list of chip ids to plot.")
-@click.option("-n", "--names", default="", help="comma separated list of sensor names to plot (partial matches accepted)")
-@click.option("-x", "--exclude-names", default="", help="comma separated list of sensor names NOT to plot (partial matches accepted)")
-@click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
-@click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
-@click.option("-p", "--particle", is_flag=True, help="plot PM-related data")
-@click.option("-h", "--humidity", is_flag=True, help="plot humidity-related data")
-@click.option("-t", "--temperature", is_flag=True, help="plot temperature-related data")
-@click.option("-mp", "--multiple-particle", is_flag=True, help="plot PM-related data for multiple sensors together")
-@click.option("-mh", "--multiple-humidity", is_flag=True, help="plot humidity-related data for multiple sensors together")
-@click.option("-mt", "--multiple-temperature", is_flag=True, help="plot temperature-related data for multiple sensors together")
-@click.option("-ma", "--multiple-altitude", is_flag=True, help="plot altitude-related data for multiple sensors together")
-def plot(inputdir, chip_ids="", names="", exclude_names = "", date_start=None,
-    date_end=None, particle=False, humidity=False, temperature=False,
+
+@optgroup.group("Input data filters", help="Use these options to create spatial, temporal or ID-based filters on the data to be visualized")
+@optgroup.option("-i", "--chip-ids", metavar="ID1,ID2,..", default="", help="comma separated list of chip ids to plot.")
+@optgroup.option("-n", "--names", metavar="NAME1,NAME2,..", default="", help="comma separated list of sensor names to plot (partial matches accepted)")
+@optgroup.option("-x", "--exclude-names", metavar="NAME1,NAME2,..", default="", help="comma separated list of sensor names NOT to plot (partial matches accepted)")
+@optgroup.option("--geo-center", metavar="LAT,LON", default="", help="Define comma separated latitude and longitude in [deg] to specify center of geographical area to be used in plots")
+@optgroup.option("--geo-radius", type=float, help="Define radius of geographical area to be used in plots in [m]")
+@optgroup.option("--date-start", type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
+@optgroup.option("--date-end", type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
+
+@optgroup.group("Plot types", help="Use these options to define what to plot")
+@optgroup.option("-p", "--particle", is_flag=True, help="plot PM-related data")
+@optgroup.option("-h", "--humidity", is_flag=True, help="plot humidity-related data")
+@optgroup.option("-t", "--temperature", is_flag=True, help="plot temperature-related data")
+@optgroup.option("-mp", "--multiple-particle", is_flag=True, help="plot PM-related data for multiple sensors together")
+@optgroup.option("-mh", "--multiple-humidity", is_flag=True, help="plot humidity-related data for multiple sensors together")
+@optgroup.option("-mt", "--multiple-temperature", is_flag=True, help="plot temperature-related data for multiple sensors together")
+@optgroup.option("-ma", "--multiple-altitude", is_flag=True, help="plot altitude-related data for multiple sensors together")
+
+def plot(inputdir, chip_ids="",
+    names="", exclude_names ="",
+    geo_center="", geo_radius=None,
+    date_start=None, date_end=None,
+    particle=False, humidity=False, temperature=False,
     multiple_particle=False, multiple_humidity=False,
     multiple_temperature=False, multiple_altitude=False,
 ):
@@ -37,7 +48,7 @@ def plot(inputdir, chip_ids="", names="", exclude_names = "", date_start=None,
     under INPUTDIR
 
     All sensor data will be plotted under INPUTDIR by default, unless ID or NAME
-    options are given to specify sensors explicitely.
+    or geolocation based filters are given explicitely to specify sensors to use.
 
     """
 
@@ -45,9 +56,14 @@ def plot(inputdir, chip_ids="", names="", exclude_names = "", date_start=None,
     chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
     names = names.split(",") if names else []
     exclude_names = exclude_names.split(",") if exclude_names else []
+    # prepare geolocation based parameters
+    geo_center = [float(x) for x in geo_center.split(",")][:2] if geo_center \
+        else None
     # parse sensors from files
-    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids, names=names,
-        exclude_names=exclude_names, date_start=date_start, date_end=date_end)
+    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids,
+        names=names, exclude_names=exclude_names,
+        geo_center=geo_center, geo_radius=geo_radius,
+        date_start=date_start, date_end=date_end)
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()

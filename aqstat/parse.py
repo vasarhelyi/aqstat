@@ -142,7 +142,9 @@ def parse_sensorcommunity_csv(filename):
     )
 
 def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
-    date_start=None, date_end=None, only_metadata=False
+    geo_center=None, geo_radius=None,
+    date_start=None, date_end=None,
+    only_metadata=False
 ):
     """Parse all sensor data and metadata for the given chip_ids in the given
     period from inputdir.
@@ -159,6 +161,11 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
         exclude_names (list): list of sensor names NOT to be parsed (partial
             match accepted) If empty (and chip_ids and names is empty, too),
             parse all sensors found.
+        geo_center (float, float): latitude and longitude in [degrees], defining
+            the center of the geographical filter to use on input devices.
+            Should be used together with geo_radius.
+        geo_radius (float): radius of the geographical filter to use on input
+            devices in [m]. Should be used together with geo_center.
         date_start (datetime): starting date limit or None if not used
         date_end (datetime): ending date limit or None if not used
         only_metadata (bool): should we parse only metadata or data as well?
@@ -173,6 +180,7 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
     # import here to avoid circular imports
     from .aqdata import AQData
     from .metadata import AQMetaData
+    from .utils import latlon_distance
 
     sensors = []
 
@@ -186,6 +194,11 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
         metadata = AQMetaData.from_json(filename)
         # skip if exclude_names matches
         if exclude_names and True in [name in metadata.name for name in exclude_names]:
+            continue
+        # skip if outside of defined geographical area
+        if geo_center and geo_radius and latlon_distance(
+                geo_center[0], geo_center[1],
+                metadata.location.lat, metadata.location.lon) > geo_radius:
             continue
         # add chip_id if name matches
         if names and True in [name in metadata.name for name in names]:

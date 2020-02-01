@@ -7,6 +7,7 @@ from setuptools import setup, find_packages
 
 requires = [
     "click>=7.0",
+    "click_option_group>=0.2.3",
     "requests>=2.22",
     "pandas>=0.25",
 ]
