@@ -58,6 +58,26 @@ def highlight(x, condition, ax):
         )
         start = stop + 1
 
+def add_pm_limits(keys, ax):
+    """Add sensor limits to the plots.
+
+    Parameters:
+        keys(list[str]): list of keys that are plotted on the y axis
+        ax(?): matplotlib axis
+
+    """
+    xlim = ax.get_xlim()
+    if "pm10" in keys:
+        for label in [x for x in pm_limits if x.startswith("PM10")]:
+            ax.plot(xlim, [pm_limits[label][0]]*2, linestyle="--",
+                color=pm_limits[label][1], label=label
+            )
+    if "pm2_5" in keys or "pm2_5_calib" in keys:
+        for label in [x for x in pm_limits if x.startswith("PM2.5")]:
+            ax.plot(xlim, [pm_limits[label][0]]*2, linestyle="--",
+                color=pm_limits[label][1], label=label
+            )
+
 def plot_daily_variation(sensor, keys):
     """Plot daily variation of data accumulated through several days.
 
@@ -191,6 +211,10 @@ def plot_multiple_altitude(sensors):
         coef = np.polyfit(x, y, 1)
         poly1d_fn = np.poly1d(coef)
         plt.plot(x, poly1d_fn(x), 'r--')
+        # add pm limits
+        if "pm" in key:
+            add_pm_limits(key, plt.gca())
+            plt.legend()
         # set labels
         plt.xlabel("Above mean sea level (m)")
         plt.ylabel(key)
@@ -199,7 +223,6 @@ def plot_multiple_altitude(sensors):
             "linear fit: {} = {:g} * altitude {} {:g}".format(
             key, coef[0], "+" if coef[1] >= 0 else "-", abs(coef[1])
         )]))
-
         plt.show()
 
 def plot_multiple_humidity(sensors):
@@ -247,16 +270,7 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None
                 sensor.name, sensor.altitude), ax=ax
             )
         plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
-    if "pm10" in keys:
-        for label in [x for x in pm_limits if x.startswith("PM10")]:
-            plt.plot(plt.xlim(), [pm_limits[label][0]]*2, linestyle="--",
-                color=pm_limits[label][1], label=label
-            )
-    if "pm2_5" in keys or "pm2_5_calib" in keys:
-        for label in [x for x in pm_limits if x.startswith("PM2.5")]:
-            plt.plot(plt.xlim(), [pm_limits[label][0]]*2, linestyle="--",
-                color=pm_limits[label][1], label=label
-            )
+    add_pm_limits(keys, ax)
     if window:
         plt.title("rolling window: {}".format(window))
     plt.grid(axis='y')
@@ -311,10 +325,7 @@ def plot_pm(sensor, window=None):
     daily_data.plot(y="pm10", color="darkblue", marker="o", linestyle="", label="daily PM10 avg", ax=a1)
     daily_data.plot(y="pm2_5", color="red", marker="o", linestyle="", label="daily PM2.5 avg", ax=a1)
     daily_data.plot(y="pm2_5_calib", color="darkgreen", marker="o", linestyle="", label="daily calibrated PM2.5 avg", ax=a1)
-    for label in pm_limits:
-        a1.plot(a1.get_xlim(), [pm_limits[label][0]]*2,
-            color=pm_limits[label][1], linestyle='--', label=label
-        )
+    add_pm_limits(["pm10", "pm2_5", "pm2_5_calib"], a1)
     highlight(sensor.data.index, high_humidity, a1)
     a1.set_ylim(sensor_ranges["pm10"])
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
@@ -445,10 +456,7 @@ def plot_pm_vs_environment_hist(sensor, key="humidity"):
                     ha="center", va="center", fontsize=7
             )
     # plot health limits
-    for label in [x for x in pm_limits if x.startswith("PM10")]:
-        ax_main.plot(ax_main.get_xlim(), [pm_limits[label][0]]*2,
-            linestyle="--", color=pm_limits[label][1], label=label
-        )
+    add_pm_limits(["pm10"], ax_main)
     # plot pm10 humidity working limit
     if key == "humidity":
         ax_main.plot([humidity_threshold]*2, ax_main.get_ylim(), "b--",
@@ -486,10 +494,7 @@ def plot_pm_vs_environment_hist(sensor, key="humidity"):
     ax_right.hist(sensor.data.pm10, bins=24, range=sensor_ranges["pm10"],
         histtype="step", orientation="horizontal",
         weights=np.ones(len(sensor.data.pm10)) / len(sensor.data.pm10))
-    for label in [x for x in pm_limits if x.startswith("PM10")]:
-        ax_right.plot(ax_right.get_xlim(), [pm_limits[label][0]]*2,
-            linestyle="--", color=pm_limits[label][1], label=label
-        )
+    add_pm_limits(["pm10"], ax_right)
     ax_right.set_ylim(sensor_ranges["pm10"])
     ax_right.get_yaxis().set_visible(False)
     ax_right.set_xlabel("percent")
