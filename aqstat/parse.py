@@ -116,7 +116,10 @@ def parse_metadata_from_sensorcommunity_csv_filename(filename):
     """
     tokens = os.path.basename(os.path.splitext(filename)[0]).split("_")
     if len(tokens) == 4 and tokens[2] == "sensor":
-        date = datetime.strptime(tokens[0], "%Y-%m-%d")
+        try:
+            date = datetime.strptime(tokens[0], "%Y-%m-%d")
+        except ValueError:
+            date = None
         sensor_type = tokens[1]
         sensor_id = int(tokens[3])
         return (sensor_id, sensor_type, date)
@@ -190,7 +193,7 @@ def parse_sensorcommunity_csv(filename):
     )
 
     # custom format of OLM, lets parse dates manually
-    # (e.g., 24:00 is invaid for pandas)
+    # (e.g., 24:00 is invalid for pandas)
     if type(ret.index[0]) == str:
         newindex = []
         for x in ret.index:

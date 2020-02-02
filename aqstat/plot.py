@@ -305,20 +305,23 @@ def plot_pm(sensor, gsod=None, window=None):
     # create daily data
     daily_data = sensor.data.resample('d').mean()
     # create subplots
-    f, (a0, a1) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [1, 5]})
+    f, (a0, a1) = plt.subplots(2, 1, sharex=False, gridspec_kw={'height_ratios': [1, 5]})
     # create humidity plot
     high_humidity = sensor.data.humidity > humidity_threshold
     a0.plot(sensor.data.index, masked_where(1 - high_humidity, sensor.data.humidity), 'r', ms=1)
     a0.plot(sensor.data.index, masked_where(high_humidity, sensor.data.humidity), 'b', ms=1)
     highlight(sensor.data.index, high_humidity, a0)
+    a0.set_xlim(sensor.data.index[0], sensor.data.index[-1])
     a0.set_ylim([0, 100])
     a0.set_yticks([0, humidity_threshold, 100])
+    a0.tick_params(axis='x', which='minor', bottom=False)
     a0.grid(axis='y')
     a0.set_ylabel("humidity (%)")
     # create wind plot
     if gsod is not None:
         a02 = a0.twinx()
         a02.plot(gsod.index, gsod.MXSPD, 'o-g', ms=3)
+        a02.set_xlim(sensor.data.index[0], sensor.data.index[-1])
         a02.set_ylim([0, None])
         a02.set_ylabel("wind (m/s)", color='g')
         a02.spines['right'].set_color('g')
@@ -338,6 +341,7 @@ def plot_pm(sensor, gsod=None, window=None):
     daily_data.plot(y="pm2_5_calib", color="darkgreen", marker="o", linestyle="", label="daily calibrated PM2.5 avg", ax=a1)
     add_pm_limits(["pm10", "pm2_5", "pm2_5_calib"], a1)
     highlight(sensor.data.index, high_humidity, a1)
+    a1.set_xlim(sensor.data.index[0], sensor.data.index[-1])
     a1.set_ylim(sensor_ranges["pm10"])
     a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
@@ -350,6 +354,8 @@ def plot_pm(sensor, gsod=None, window=None):
     if window:
         title += ("\nrolling window: {}".format(window))
     a0.set_title(title)
+    # set common xlim (note: sharex does not work if there is no humidity but gsod data)
+    a0.set_xticks(a1.get_xticks())
     plt.show()
 
 def plot_pm_ratio(sensor):
