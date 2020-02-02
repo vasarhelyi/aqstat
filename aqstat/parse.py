@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 import logging
 import os
-from pandas import read_csv
+from pandas import read_csv, to_datetime, Timedelta
 from pathlib import Path
 
 from .utils import find_sensor_with_id
@@ -183,10 +183,23 @@ def parse_sensorcommunity_csv(filename):
         indexed with timestamps (by default defined in the "timestamp" column).
 
     """
-    return read_csv(filename, sep=";", parse_dates=["timestamp"],
+
+    ret = read_csv(filename, sep=";", parse_dates=["timestamp"],
         index_col="timestamp", infer_datetime_format=True,
         skipinitialspace=True
     )
+
+    # custom format of OLM, lets parse dates manually
+    # (e.g., 24:00 is invaid for pandas)
+    if type(ret.index[0]) == str:
+        newindex = []
+        for x in ret.index:
+            d, t = x.split()
+            newindex.append(to_datetime(d) + Timedelta(hours=int(t.split(":")[0])))
+        ret["timestamp"] = newindex
+        ret.set_index("timestamp", inplace=True)
+
+    return ret
 
 def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
     geo_center=None, geo_radius=None,
@@ -294,6 +307,8 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
         i = find_sensor_with_id(sensors, chip_id=chip_id, sensor_id=sensor_id)
         if i is not None:
             sensors[i].merge(newsensor, inplace=True)
+
+
 
     return [s for s in sensors if not s.data.empty]
 

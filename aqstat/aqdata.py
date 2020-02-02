@@ -103,8 +103,8 @@ class AQData(object):
         """Create a new class from a csv file.
 
         Parameters:
-            filename (Path): .csv file to read in format used by
-                madavi.de or archive.sensor.community (autodetected).
+            filename (Path): .csv file to read in format used by madavi.de or
+                archive.sensor.community
             date_start (datetime): starting date limit or None if not used
             date_end (datetime): ending date limit or None if not used.
 
@@ -124,9 +124,21 @@ class AQData(object):
             metadata = AQMetaData(chip_id=chip_id)
         # parse, select and rename data columns for sensor.community format,
         # which uses sensor_ids and is separated to individual sensor files
+        # note that custom (OLM) files are also saved in this format for
+        # convenience
         else:
             raw_data = parse_sensorcommunity_csv(filename)
-            if sensor_type == "sds011":
+            # this is our custom file from OLM, saved in compatible format
+            # with sensor.community filenames and files
+            if sensor_type == "olm":
+                data = raw_data[["P1"]]
+                data.columns = ["pm10"]
+                data.reindex(self.data_columns)
+                metadata = AQMetaData(sensors={
+                    "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
+                })
+            # below are the sensor types supported by us from sensor.community
+            elif sensor_type == "sds011":
                 data = raw_data[["P1", "P2"]]
                 data.columns = ["pm10", "pm2_5"]
                 data.reindex(self.data_columns)
@@ -151,6 +163,8 @@ class AQData(object):
                     "humidity": SensorInfo("humidity", sensor_type.upper(), sensor_id),
                     "pressure": SensorInfo("pressure", sensor_type.upper(), sensor_id),
                 })
+            else:
+                raise ValueError("Not supported sensor type: {}".format(sensor_type))
 
         return self(data=data, metadata=metadata,
             date_start=date_start, date_end=date_end)
