@@ -10,6 +10,8 @@ from pandas import Timestamp
 from aqstat.parse import parse_ids_from_string_or_dir, \
     parse_sensors_from_path
 from aqstat.stat import time_delay_correlation
+from aqstat.utils import merge_sensors_with_shared_name
+
 
 @click.command()
 @click.argument("inputdir", type=click.Path(exists=True))
@@ -34,6 +36,9 @@ def test(inputdir, chip_ids="", names="", date_start=None, date_end=None):
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()
+        #sensor.data = sensor.data.resample(rule='1h').mean()
+    # merge sensors with exactly the same name
+    sensors = merge_sensors_with_shared_name(sensors)
 
     # print correlation between datasets
     print()

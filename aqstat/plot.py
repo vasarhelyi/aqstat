@@ -255,6 +255,7 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None
     for sensor in sorted(sensors, key=lambda x: x.altitude, reverse=True):
         if window:
             data = sensor.data.rolling(window=window).mean()
+            #data = sensor.data.resample(rule=window).mean()
         else:
             data = sensor.data
         if "pm10" in keys:
