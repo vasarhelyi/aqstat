@@ -169,9 +169,13 @@ def parse_madavi_csv(filename):
         indexed with timestamps (by default defined in the "Time" column).
 
     """
-    return read_csv(filename, sep=";", parse_dates=["Time"], index_col="Time",
+    data = read_csv(filename, sep=";", parse_dates=["Time"], index_col="Time",
         infer_datetime_format=True, skipinitialspace=True
     )
+    # madavi.de timestamps are always in UTC, so lets localize it
+    #data.index = data.index.tz_localize('UTC')
+
+    return data
 
 def parse_sensorcommunity_csv(filename):
     """Read raw AQ data from sensor.community .csv file.
@@ -187,22 +191,28 @@ def parse_sensorcommunity_csv(filename):
 
     """
 
-    ret = read_csv(filename, sep=";", parse_dates=["timestamp"],
+    data = read_csv(filename, sep=";", parse_dates=["timestamp"],
         index_col="timestamp", infer_datetime_format=True,
         skipinitialspace=True
     )
 
     # custom format of OLM, lets parse dates manually
     # (e.g., 24:00 is invalid for pandas)
-    if type(ret.index[0]) == str:
+    if type(data.index[0]) == str:
         newindex = []
-        for x in ret.index:
+        for x in data.index:
             d, t = x.split()
             newindex.append(to_datetime(d) + Timedelta(hours=int(t.split(":")[0])))
-        ret["timestamp"] = newindex
-        ret.set_index("timestamp", inplace=True)
+        data["timestamp"] = newindex
+        data.set_index("timestamp", inplace=True)
+        # OLM data is always in CET, so lets convert it to UTC
+        data.index = data.index.tz_localize('CET').tz_convert('UTC').tz_localize(None)
+     #else:
+        # sensor.community data is time-zone aware and is de-localized to UTC
+        # during parsing, but we need to localize again
+        #data.index = data.index.tz_localize('UTC')
 
-    return ret
+    return data
 
 def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
     geo_center=None, geo_radius=None,
