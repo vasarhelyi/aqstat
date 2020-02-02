@@ -25,7 +25,7 @@ from aqstat.utils import merge_sensors_with_shared_name
 @optgroup.option("-i", "--chip-ids", metavar="ID1,ID2,..", default="", help="comma separated list of chip ids to plot.")
 @optgroup.option("-n", "--names", metavar="NAME1,NAME2,..", default="", help="comma separated list of sensor names to plot (partial matches accepted)")
 @optgroup.option("-x", "--exclude-names", metavar="NAME1,NAME2,..", default="", help="comma separated list of sensor names NOT to plot (partial matches accepted)")
-@optgroup.option("--geo-center", metavar="LAT,LON", default="", help="Define comma separated latitude and longitude in [deg] to specify center of geographical area to be used in plots")
+@optgroup.option("--geo-center", metavar="LAT,LON|NAME", default="", help="Define comma separated latitude and longitude in [deg] to specify center of geographical area to be used in plots, or, alternatively, define center with exact sensor name that has geolocation metadata")
 @optgroup.option("--geo-radius", type=float, help="Define radius of geographical area to be used in plots in [m]")
 @optgroup.option("--date-start", type=click.DateTime(formats=["%Y-%m-%d"]), help="first date to include in the analysis")
 @optgroup.option("--date-end", type=click.DateTime(formats=["%Y-%m-%d"]), help="last date to include in the analysis")
@@ -60,8 +60,17 @@ def plot(inputdir, gsod="", chip_ids="",
     names = names.split(",") if names else []
     exclude_names = exclude_names.split(",") if exclude_names else []
     # prepare geolocation based parameters
-    geo_center = [float(x) for x in geo_center.split(",")][:2] if geo_center \
-        else None
+    if geo_center:
+        geo_center = geo_center.split(",")
+        if len(geo_center) == 2:
+            geo_center = [float(x) for x in geo_center]
+        elif len(geo_center) == 1:
+            geo_center = str(geo_center[0])
+        else:
+            logging.error("geo-center could not be parsed")
+            return
+    else:
+        geo_center = None
 
     # parse sensors from files
     sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids,

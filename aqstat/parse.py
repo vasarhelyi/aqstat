@@ -224,9 +224,9 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
         exclude_names (list): list of sensor names NOT to be parsed (partial
             match accepted) If empty (and chip_ids and names is empty, too),
             parse all sensors found.
-        geo_center (float, float): latitude and longitude in [degrees], defining
-            the center of the geographical filter to use on input devices.
-            Should be used together with geo_radius.
+        geo_center (float, float|str): latitude and longitude in [degrees],
+            or exact sensor name, defining the center of the geographical filter
+            to use on input devices. Should be used together with geo_radius.
         geo_radius (float): radius of the geographical filter to use on input
             devices in [m]. Should be used together with geo_center.
         date_start (datetime): starting date limit or None if not used
@@ -258,11 +258,10 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
         # skip if exclude_names matches
         if exclude_names and True in [name in metadata.name for name in exclude_names]:
             continue
-        # skip if outside of defined geographical area
-        if geo_center and geo_radius and latlon_distance(
-                geo_center[0], geo_center[1],
-                metadata.location.lat, metadata.location.lon) > geo_radius:
-            continue
+        # check for geo center in metadata if center is given as sensor name
+        if geo_center and type(geo_center) == str:
+            if geo_center == metadata.name:
+                geo_center = [metadata.location.lat, metadata.location.lon]
         # skip if names are defined and there is no match
         if names and True not in [name in metadata.name for name in names]:
             continue
@@ -275,6 +274,19 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
             sensors.append(AQData(metadata=metadata))
         else:
             sensors[i].metadata.merge(metadata, inplace=True)
+
+    # check geo_center here once we already have exact lat-lon for sure
+    if geo_center:
+        if type(geo_center) == str:
+            logging.warning("Could not find metadata to be used as geo center, filter is inactive")
+        else:
+            filtered = []
+            for sensor in sensors:
+                if latlon_distance(geo_center[0], geo_center[1],
+                    sensor.metadata.location.lat,
+                    sensor.metadata.location.lon) <= geo_radius:
+                    filtered.append(sensor)
+            sensors = filtered
 
     # if only metadata is needed or we found nothing, we quit here
     if (not sensors) or only_metadata:
