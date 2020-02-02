@@ -260,7 +260,8 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None
             data = sensor.data
         if "pm10" in keys:
             data.plot(y="pm10", label="{} PM10 @ {}m".format(
-                sensor.name, sensor.altitude), ax=ax
+                sensor.name, sensor.altitude), ax=ax,
+                linewidth=2 if sensor.metadata.sensors["pm10"].type == "OLM" else 1
             )
         if "pm2_5" in keys:
             data.plot(y="pm2_5", label="{} PM2.5 @ {}m".format(
