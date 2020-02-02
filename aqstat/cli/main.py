@@ -45,7 +45,8 @@ def start(verbose=False):
        air quality directory on your computer, where .json files are in the
        main directory and data .csv files are organized into subdirectories
        according to device IDs or sensor IDs), run `aqstat plot` to visualize
-       what you need. See its own help for more details.
+       what you need or 'aqstat stat' to get some nice statistics on data.
+       See help of each of these commands for more details.
 
        """
 
@@ -58,16 +59,16 @@ def start(verbose=False):
         log_level = logging.WARN
     logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
 
-
 # import commands
 from .commands.download import download
 from .commands.plot import plot
+from .commands.stat import stat
 from .commands.test import test
 # add commands from separate files
 start.add_command(download)
 start.add_command(plot)
+start.add_command(stat)
 start.add_command(test)
-
 
 if __name__ == '__main__':
     start()

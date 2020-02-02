@@ -7,7 +7,7 @@ import os
 from pandas import read_csv, to_datetime, Timedelta
 from pathlib import Path
 
-from .utils import find_sensor_with_id
+from .utils import find_sensor_with_id, merge_sensors_with_shared_name
 
 def create_id_dirs_from_json(outputdir, sensor_id=False, chip_id=False):
     """Create subdirectories under outputdir for all IDs found in .json
@@ -27,6 +27,39 @@ def create_id_dirs_from_json(outputdir, sensor_id=False, chip_id=False):
             os.makedirs(os.path.join(outputdir, str(sensor.chip_id)),
                 exist_ok=True
             )
+
+def parse_and_setup_sensors(inputdir, chip_ids="", names="", exclude_names="",
+    geo_center="", geo_radius=None, date_start=None, date_end=None
+):
+    # get list of chip IDs and names from option
+    chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
+    names = names.split(",") if names else []
+    exclude_names = exclude_names.split(",") if exclude_names else []
+    # prepare geolocation based parameters
+    if geo_center:
+        geo_center = geo_center.split(",")
+        if len(geo_center) == 2:
+            geo_center = [float(x) for x in geo_center]
+        elif len(geo_center) == 1:
+            geo_center = str(geo_center[0])
+        else:
+            logging.error("geo-center could not be parsed")
+            return
+    else:
+        geo_center = None
+
+    # parse sensors from files
+    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids,
+        names=names, exclude_names=exclude_names,
+        geo_center=geo_center, geo_radius=geo_radius,
+        date_start=date_start, date_end=date_end)
+    # perform calibration on sensor data
+    for sensor in sensors:
+        sensor.calibrate()
+    # merge sensors with exactly the same name
+    sensors = merge_sensors_with_shared_name(sensors)
+
+    return sensors
 
 def parse_gsod_data(filename):
     """Parse Global Summary of the Day (GSOD) data from a comma separated

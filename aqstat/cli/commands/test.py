@@ -7,10 +7,8 @@ import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
 from pandas import Timestamp
 
-from aqstat.parse import parse_ids_from_string_or_dir, \
-    parse_sensors_from_path
+from aqstat.parse import parse_and_setup_sensors
 from aqstat.stat import time_delay_correlation
-from aqstat.utils import merge_sensors_with_shared_name
 
 
 @click.command()
@@ -26,35 +24,12 @@ def test(inputdir, chip_ids="", names="", date_start=None, date_end=None):
     If no CHIP_IDS are given, all data will be used under INPUTDIR.
 
     """
-
-    # get list of chip IDs and names from option
-    chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
-    names = names.split(",") if names else []
-    # parse sensors from files
-    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids, names=names,
-        date_start=date_start, date_end=date_end)
-    # perform calibration on sensor data
-    for sensor in sensors:
-        sensor.calibrate()
-        #sensor.data = sensor.data.resample(rule='1h').mean()
-    # merge sensors with exactly the same name
-    sensors = merge_sensors_with_shared_name(sensors)
-
-    # print correlation between datasets
-    print()
-    for a, b in combinations(sensors, 2):
-        print()
-        print("Correlations between chip ids {} and {}".format(
-            a.chip_id, b.chip_id)
-        )
-        print(a.corrwith(b, tolerance=60))
-
-    # print main frequencies
-    print()
-    for sensor in sensors:
-        df = sensor.data.index.to_series().diff()
-        print("name\tchip_id\tmin\tmax\mean\tmedian")
-        print("\t".join(map(str, [sensor.name, sensor.chip_id, df.min(), df.max(), df.mean(), df.median()])))
+    # prepare all sensor data to use
+    sensors = parse_and_setup_sensors(inputdir, chip_ids=chip_ids,
+        names=names, exclude_names=None,
+        geo_center=None, geo_radius=None,
+        date_start=date_start, date_end=date_end
+    )
 
     # test time delay correlation
     print()

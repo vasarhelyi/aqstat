@@ -83,3 +83,7 @@ def merge_sensors_with_shared_name(sensors):
         i += 1
 
     return sensors
+
+def print_title(title):
+    """Print underlined title to console."""
+    print("\n\n{}\n{}\n".format(title, "-" * len(title)))
