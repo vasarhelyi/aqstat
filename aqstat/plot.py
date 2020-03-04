@@ -9,6 +9,7 @@ from numpy.ma import masked_where
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
+from aqstat.cli.main import _
 
 # global parameters
 markersize=3
@@ -17,10 +18,10 @@ humidity_threshold = 70
 # http://emiktf.hu/olm.html
 # http://www.levegominoseg.hu/hatarertek
 pm_limits = {
-    "PM2.5 yearly limit": (25, "coral"),
-    "PM10 daily health limit": (50, "red"),
-    "PM10 daily notification limit": (75, "darkred"),
-    "PM10 daily emergency limit": (100, "black"),
+    _("PM2.5 yearly limit"): (25, "coral"),
+    _("PM10 daily health limit"): (50, "red"),
+    _("PM10 daily notification limit"): (75, "darkred"),
+    _("PM10 daily emergency limit"): (100, "black"),
 }
 
 # feasible measurement ranges for each sensor type
@@ -99,8 +100,8 @@ def plot_daily_variation(sensor, keys):
             label="{} - daily_avg".format(key)
         )
     plt.grid(axis='y')
-    plt.xlabel("hours of day")
-    plt.ylabel("daily variation")
+    plt.xlabel(_("hours of day"))
+    plt.ylabel(_("daily variation"))
     plt.title(sensor.name)
     plt.legend()
     plt.show()
@@ -125,8 +126,8 @@ def plot_daily_variation_hist(sensor, keys, mins=None):
             key, "" if mins is None else " > {}".format(mins[i]))
         )
     plt.grid(axis='y')
-    plt.xlabel("hours of day")
-    plt.ylabel("relative occurrences (%)")
+    plt.xlabel(_("hours of day"))
+    plt.ylabel(_("relative occurrences (%)"))
     plt.title("\n".join([
         "{}, period: {} - {}".format(sensor.name, sensor.data.index[0].date(),
             sensor.data.index[-1].date(),

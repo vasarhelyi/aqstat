@@ -9,11 +9,15 @@ whole AQ thing should be treated.
 import click
 import logging
 
+# define language to be used (use from en|hu)
+language = 'en'
 
 @click.group()
 # TODO: enable this once setuptools is setup properly...
 #@click.version_option()
 @click.option("-v", "--verbose", count=True, help="increase logging verbosity")
+# TODO: setup language selection as an option, but how?
+#@click.option("-l", "--language", type=click.Choice(['EN', 'HU'], case_sensitive=False), default="EN", help="choose language of plots")
 def start(verbose=False):
     """AQStat is a tool to analyze and visualize air quality data collected
     under the luftdaten.info project. Main steps of usage are below.
@@ -58,6 +62,20 @@ def start(verbose=False):
     else:
         log_level = logging.WARN
     logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
+
+# get translations
+if language.lower() == 'en':
+    _ = lambda s: s
+else:
+    from gettext import translation
+    from inspect import getsourcefile
+    from os.path import join, dirname, abspath
+
+    lang_translations = translation('aqstat',
+        localedir=join(dirname(abspath(getsourcefile(lambda:0))), '..', 'locales'),
+        languages=[language.lower()]
+    )
+    _ = lang_translations.gettext
 
 # import commands
 from .commands.download import download

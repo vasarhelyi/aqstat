@@ -1,0 +1,45 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2020-03-04 06:28+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=cp1250\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: ..\.\plot.py:20
+msgid "PM2.5 yearly limit"
+msgstr ""
+
+#: ..\.\plot.py:21
+msgid "PM10 daily health limit"
+msgstr ""
+
+#: ..\.\plot.py:22
+msgid "PM10 daily notification limit"
+msgstr ""
+
+#: ..\.\plot.py:23
+msgid "PM10 daily emergency limit"
+msgstr ""
+
+#: ..\.\plot.py:102 ..\.\plot.py:128
+msgid "hours of day"
+msgstr ""
+
+#: ..\.\plot.py:103
+msgid "daily variation"
+msgstr ""
+
+#: ..\.\plot.py:129
+msgid "relative occurrences (%)"
+msgstr ""
+
