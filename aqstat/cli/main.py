@@ -10,7 +10,7 @@ import click
 import logging
 
 # define language to be used (use from en|hu)
-language = 'en'
+language = 'hu'
 
 @click.group()
 # TODO: enable this once setuptools is setup properly...

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2020-03-04 06:28+0100\n"
+"POT-Creation-Date: 2020-03-07 07:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,31 +15,39 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: ..\.\plot.py:20
+msgid "temperature"
+msgstr ""
+
+msgid "humidity"
+msgstr ""
+
+msgid "pressure"
+msgstr ""
+
 msgid "PM2.5 yearly limit"
 msgstr ""
 
-#: ..\.\plot.py:21
 msgid "PM10 daily health limit"
 msgstr ""
 
-#: ..\.\plot.py:22
 msgid "PM10 daily notification limit"
 msgstr ""
 
-#: ..\.\plot.py:23
 msgid "PM10 daily emergency limit"
 msgstr ""
 
-#: ..\.\plot.py:102 ..\.\plot.py:128
-msgid "hours of day"
+msgid "avg"
 msgstr ""
 
-#: ..\.\plot.py:103
+msgid "daily_avg"
+msgstr ""
+
+msgid "time of day"
+msgstr ""
+
 msgid "daily variation"
 msgstr ""
 
-#: ..\.\plot.py:129
-msgid "relative occurrences (%)"
+msgid "relative occurrence (%)"
 msgstr ""
 

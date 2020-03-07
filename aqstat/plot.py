@@ -11,6 +11,12 @@ register_matplotlib_converters()
 
 from aqstat.cli.main import _
 
+# note that these are needed for understanding  _(key) declaratinos as part of
+# the .pot translation database that is automatically extracted by pygettext.py
+_("temperature")
+_("humidity")
+_("pressure")
+
 # global parameters
 markersize=3
 humidity_threshold = 70
@@ -94,13 +100,13 @@ def plot_daily_variation(sensor, keys):
         data1 = (data - total_average).groupby(data.index.hour).agg(["mean", "std"])
         data2 = (data - daily_average).groupby(data.index.hour).agg(["mean", "std"])
         plt.errorbar(x=data1.index + i * 0.1, y=data1["mean"], yerr=data1["std"],
-            label="{} - avg({:.1f})".format(key, total_average)
+            label="{} - {}({:.1f})".format(_(key), _("avg"), total_average)
         )
         plt.errorbar(x=data2.index + i * 0.1, y=data2["mean"], yerr=data2["std"],
-            label="{} - daily_avg".format(key)
+            label="{} - {}".format(_(key), _("daily_avg"))
         )
     plt.grid(axis='y')
-    plt.xlabel(_("hours of day"))
+    plt.xlabel(_("time of day"))
     plt.ylabel(_("daily variation"))
     plt.title(sensor.name)
     plt.legend()
@@ -126,8 +132,8 @@ def plot_daily_variation_hist(sensor, keys, mins=None):
             key, "" if mins is None else " > {}".format(mins[i]))
         )
     plt.grid(axis='y')
-    plt.xlabel(_("hours of day"))
-    plt.ylabel(_("relative occurrences (%)"))
+    plt.xlabel(_("time of day"))
+    plt.ylabel(_("relative occurrence (%)"))
     plt.title("\n".join([
         "{}, period: {} - {}".format(sensor.name, sensor.data.index[0].date(),
             sensor.data.index[-1].date(),
@@ -350,7 +356,7 @@ def plot_pm(sensor, gsod=None, window=None):
     a1.grid(axis='y')
     a1.legend()
     a1.set_title(r"PM10 polluted days: {}/{}".format(
-        daily_data.pm10[daily_data.pm10 > pm_limits["PM10 daily health limit"][0]].count(),
+        daily_data.pm10[daily_data.pm10 > pm_limits[_("PM10 daily health limit")][0]].count(),
         len(daily_data),
     ))
     title = sensor.name

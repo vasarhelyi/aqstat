@@ -5,42 +5,53 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2020-03-04 06:28+0100\n"
-"PO-Revision-Date: 2020-03-04 08:06+0100\n"
+"POT-Creation-Date: 2020-03-07 07:22+0100\n"
+"PO-Revision-Date: 2020-03-07 07:23+0100\n"
+"Last-Translator: \n"
 "Language-Team: \n"
+"Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 2.3\n"
-"Last-Translator: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"Language: hu\n"
 
-#: ..\.\plot.py:20
+msgid "temperature"
+msgstr "hőmérséklet"
+
+msgid "humidity"
+msgstr "páratartalom"
+
+msgid "pressure"
+msgstr "nyomás"
+
 msgid "PM2.5 yearly limit"
 msgstr "PM2.5 éves határérték"
 
-#: ..\.\plot.py:21
 msgid "PM10 daily health limit"
 msgstr "PM10 napi egészségügyi határérték"
 
-#: ..\.\plot.py:22
 msgid "PM10 daily notification limit"
 msgstr "PM10 napi értesítési küszöb"
 
-#: ..\.\plot.py:23
 msgid "PM10 daily emergency limit"
 msgstr "PM10 napi vészhelyzeti küszöb"
 
-#: ..\.\plot.py:102 ..\.\plot.py:128
-msgid "hours of day"
+msgid "avg"
+msgstr "átlag"
+
+msgid "daily_avg"
+msgstr "napi_átlag"
+
+msgid "time of day"
 msgstr "a nap órái"
 
-#: ..\.\plot.py:103
 msgid "daily variation"
 msgstr "napi variáció"
 
-#: ..\.\plot.py:129
-msgid "relative occurrences (%)"
-msgstr "relatív előfordulások (%)"
+msgid "relative occurrence (%)"
+msgstr "relatív előfordulás (%)"
+
+#~ msgid "hours"
+#~ msgstr "órák"
