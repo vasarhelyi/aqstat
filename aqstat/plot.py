@@ -154,7 +154,7 @@ def plot_humidity(sensor):
 
     """
     # plot time series
-    sensor.data.plot(y="humidity", label="humidity (avg={:.1f})".format(
+    sensor.data.plot(y="humidity", label=_("humidity") + " (" + _("avg") + "={:.1f})".format(
         sensor.data.humidity.mean())
     )
     # add min label
@@ -170,7 +170,7 @@ def plot_humidity(sensor):
         ha="center", va="bottom"
     )
 
-    plt.ylabel("humidity (%)")
+    plt.ylabel(_("humidity") + " (%)")
     plt.grid(axis='y')
     plt.title(sensor.name)
     plt.show()
@@ -278,7 +278,7 @@ def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None
             data.plot(y="pm2_5_calib", label="{} PM2.5 calib @ {}m".format(
                 sensor.name, sensor.altitude), ax=ax
             )
-        plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
+        plt.ylabel("PM " + _("concentration") + r" ($\mathrm{\mu g/m^3}$)")
     add_pm_limits(keys, ax)
     if window:
         plt.title("rolling window: {}".format(window))
@@ -325,7 +325,7 @@ def plot_pm(sensor, gsod=None, window=None):
     a0.set_yticks([0, humidity_threshold, 100])
     a0.tick_params(axis='x', which='minor', bottom=False)
     a0.grid(axis='y')
-    a0.set_ylabel("humidity (%)")
+    a0.set_ylabel(_("humidity") + " (%)")
     # create wind plot
     if gsod is not None:
         a02 = a0.twinx()
@@ -342,17 +342,17 @@ def plot_pm(sensor, gsod=None, window=None):
     else:
         data = sensor.data
     # plot data
-    data.plot(y="pm10", color="steelblue", label="PM10 (avg={:.1f})".format(sensor.data.pm10.mean()), ax=a1)
-    data.plot(y="pm2_5", color="orange", label="PM2.5 (avg={:.1f})".format(sensor.data.pm2_5.mean()), ax=a1)
-    data.plot(y="pm2_5_calib", color="olivedrab", label="PM2.5_calib (avg={:.1f})".format(sensor.data.pm2_5_calib.mean()), ax=a1)
-    daily_data.plot(y="pm10", color="darkblue", marker="o", linestyle="", label="daily PM10 avg", ax=a1)
-    daily_data.plot(y="pm2_5", color="red", marker="o", linestyle="", label="daily PM2.5 avg", ax=a1)
-    daily_data.plot(y="pm2_5_calib", color="darkgreen", marker="o", linestyle="", label="daily calibrated PM2.5 avg", ax=a1)
+    data.plot(y="pm10", color="steelblue", label="PM10 ({}={:.1f})".format(_("avg"), sensor.data.pm10.mean()), ax=a1)
+    data.plot(y="pm2_5", color="orange", label="PM2.5 ({}={:.1f})".format(_("avg"), sensor.data.pm2_5.mean()), ax=a1)
+    data.plot(y="pm2_5_calib", color="olivedrab", label="PM2.5_calib ({}={:.1f})".format(_("avg"), sensor.data.pm2_5_calib.mean()), ax=a1)
+    daily_data.plot(y="pm10", color="darkblue", marker="o", linestyle="", label=_("daily") + " PM10 " + _("avg"), ax=a1)
+    daily_data.plot(y="pm2_5", color="red", marker="o", linestyle="", label=_("daily") + " PM2.5 " + _("avg"), ax=a1)
+    daily_data.plot(y="pm2_5_calib", color="darkgreen", marker="o", linestyle="", label=_("daily") + " " + _("calibrated") + " PM10 " + _("avg"), ax=a1)
     add_pm_limits(["pm10", "pm2_5", "pm2_5_calib"], a1)
     highlight(sensor.data.index, high_humidity, a1)
     a1.set_xlim(sensor.data.index[0], sensor.data.index[-1])
     a1.set_ylim(sensor_ranges["pm10"])
-    a1.set_ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
+    a1.set_ylabel("PM " + _("concentration") + r" ($\mathrm{\mu g/m^3}$)")
     a1.grid(axis='y')
     a1.legend()
     a1.set_title(r"PM10 polluted days: {}/{}".format(
@@ -423,8 +423,8 @@ def plot_pm_vs_humidity(sensor):
     ax = plt.figure().gca()
     sensor.data.plot("humidity", "pm10", style='o', ms=markersize, label="PM10-humidity", ax=ax)
     sensor.data.plot("humidity", "pm2_5", style='o', ms=markersize, label="PM2.5-humidity", ax=ax)
-    plt.xlabel("humidity (%)")
-    plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
+    plt.xlabel(_("humidity") + _(" (%)"))
+    plt.ylabel("PM " + _("concentration") + r" ($\mathrm{\mu g/m^3}$)")
     plt.title("\n".join([
         sensor.name,
         "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.humidity)[0])
@@ -457,7 +457,7 @@ def plot_pm_vs_environment_hist(sensor, key="humidity"):
 
     if key == "humidity":
         xdata = sensor.data.humidity
-        xlabel = "humidity (%)"
+        xlabel = _("humidity") + " (%)"
     elif key == "temperature":
         xdata = sensor.data.temperature
         xlabel = r"temperature ($\mathrm{\degree C}$)"
@@ -494,7 +494,7 @@ def plot_pm_vs_environment_hist(sensor, key="humidity"):
     fig.colorbar(im, cax=cbaxes, label="number of measurements")
     # arbitrary texts
     ax_main.set_xlabel(xlabel)
-    ax_main.set_ylabel(r"PM10 concentration ($\mathrm{\mu g/m^3}$)")
+    ax_main.set_ylabel("PM10 " + _("concentration") + r" ($\mathrm{\mu g/m^3}$)")
     ax_main.legend(loc="upper left")
 
     ############################################################################
@@ -553,7 +553,7 @@ def plot_pm_vs_temperature(sensor):
     sensor.data.plot("temperature", "pm10", style='o', ms=markersize, label="PM10-temp", ax=ax)
     sensor.data.plot("temperature", "pm2_5", style='o', ms=markersize, label="PM2.5-temp", ax=ax)
     plt.xlabel(r"temperature ($\mathrm{\degree C}$)")
-    plt.ylabel(r"PM concentration ($\mathrm{\mu g/m^3}$)")
+    plt.ylabel("PM " + _("concentration") + r" ($\mathrm{\mu g/m^3}$)")
     plt.title("\n".join([
         sensor.name,
         "Pearson corr: {:.3f}".format(sensor.data[["pm10"]].corrwith(sensor.data.temperature)[0])

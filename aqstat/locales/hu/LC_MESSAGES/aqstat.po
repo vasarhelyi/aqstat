@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2020-03-07 07:22+0100\n"
-"PO-Revision-Date: 2020-03-07 07:23+0100\n"
+"POT-Creation-Date: 2020-09-04 16:14+0200\n"
+"PO-Revision-Date: 2020-09-04 16:20+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: hu\n"
@@ -21,7 +21,7 @@ msgid "temperature"
 msgstr "hőmérséklet"
 
 msgid "humidity"
-msgstr "páratartalom"
+msgstr "pára"
 
 msgid "pressure"
 msgstr "nyomás"
@@ -52,6 +52,15 @@ msgstr "napi variáció"
 
 msgid "relative occurrence (%)"
 msgstr "relatív előfordulás (%)"
+
+msgid "concentration"
+msgstr "koncentráció"
+
+msgid "daily"
+msgstr "napi"
+
+msgid "calibrated"
+msgstr "kalibrált"
 
 #~ msgid "hours"
 #~ msgstr "órák"
