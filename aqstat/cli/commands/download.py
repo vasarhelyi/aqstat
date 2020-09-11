@@ -1,16 +1,46 @@
 """Implementation of the 'download' command for AQstat."""
 
+import asks
 import click
 import datetime
 import logging
 import os
 import re
 import requests
+import trio
 import zipfile
 
 from aqstat.parse import create_id_dirs_from_json, \
     parse_ids_from_string_or_dir, parse_sensors_from_path
 from aqstat.utils import last_day_of_month
+
+async def async_download_sensorcommunity(session, url, outputdir):
+    filename = os.path.split(url)[1]
+    sensor_id = os.path.splitext(filename)[0].split("_")[-1]
+    outdir = os.path.join(outputdir, sensor_id)
+    os.makedirs(outdir, exist_ok=True)
+    outfile = os.path.join(outdir, filename)
+    r = await session.get(url, stream=True)
+    # skip non-existing or not OK files
+    if r.status_code != 200:
+        return
+    # TODO: compare current and cached ETag values instead of size
+    #       hint: https://pypi.org/project/requests-etag-cache/
+    if os.path.exists(outfile):
+        remote_size = int(r.headers["Content-Length"])
+        local_size = int(os.stat(outfile).st_size)
+        if local_size == remote_size:
+            logging.info("Skipping {}".format(filename))
+            return
+        else:
+            logging.info("Updating {}".format(filename))
+    else:
+        logging.info("Downloading {}".format(filename))
+    # download body asynchronously
+    async with await trio.open_file(outfile, 'wb') as f:
+        async for bytechunk in r.body:
+            await f.write(bytechunk)
+    assert f.closed
 
 def download_madavi(outputdir, chip_ids, date_start, date_end):
     """Download files from madavi.de/sensor.
@@ -69,7 +99,7 @@ def download_madavi(outputdir, chip_ids, date_start, date_end):
                 with zipfile.ZipFile(outfile, 'r') as zip_ref:
                     zip_ref.extractall(outdir)
 
-def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
+async def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
     sensor_types=["sds011", "dht22", "bme280"]
 ):
     """Download files from archive.sensor.community.
@@ -100,32 +130,15 @@ def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
                 urllist.append(r"{}/{}/{}_{}_sensor_{}.csv".format(baseurl,
                     datestring, datestring, sensor_type.lower(), sensor_id))
         date += delta
-    # download files (only if size differs from local)
-    for url in urllist:
-        filename = os.path.split(url)[1]
-        sensor_id = os.path.splitext(filename)[0].split("_")[-1]
-        outdir = os.path.join(outputdir, sensor_id)
-        os.makedirs(outdir, exist_ok=True)
-        outfile = os.path.join(outdir, filename)
-        r = requests.get(url, stream=True)
-        # skip non-existing or not OK files
-        if r.status_code != 200:
-            continue
-        # TODO: compare current and cached ETag values instead of size
-        #       hint: https://pypi.org/project/requests-etag-cache/
-        if os.path.exists(outfile):
-            remote_size = int(r.headers["Content-Length"])
-            local_size = int(os.stat(outfile).st_size)
-            if local_size == remote_size:
-                logging.info("Skipping {}".format(filename))
-                continue
-            else:
-                logging.info("Updating {}".format(filename))
-        else:
-            logging.info("Downloading {}".format(filename))
-        with open(outfile, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
+    # download files asynchronously (only if size differs from local)
+    from asks.sessions import Session
+    session = Session(baseurl, connections=30)
+    async with trio.open_nursery() as nursery:
+        for url in urllist:
+            nursery.start_soon(async_download_sensorcommunity,
+                session, url, outputdir
+            )
+
 
 @click.command()
 @click.argument("outputdir", type=click.Path(exists=True))
@@ -179,6 +192,6 @@ def download(outputdir, ids="", date_start=None, date_end=None,
             date_start=date_start, date_end=date_end
         )
     else:
-        download_sensorcommunity(outputdir, sensor_ids=ids,
-            date_start=date_start, date_end=date_end
+        trio.run(download_sensorcommunity,
+            outputdir, ids, date_start, date_end, ["sds011", "dht22", "bme280"]
         )
