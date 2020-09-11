@@ -10,6 +10,8 @@ requires = [
     "click_option_group>=0.2.3",
     "requests>=2.22",
     "pandas>=0.25",
+    "trio>=0.16.0",
+    "asks",
 ]
 
 __version__ = None

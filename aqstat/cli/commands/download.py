@@ -42,7 +42,41 @@ async def async_download_sensorcommunity(session, url, outputdir):
             await f.write(bytechunk)
     assert f.closed
 
-def download_madavi(outputdir, chip_ids, date_start, date_end):
+async def async_download_madavi(session, url, outputdir, chip_id):
+    filename = os.path.split(url)[1]
+    outdir = os.path.join(outputdir, str(chip_id))
+    os.makedirs(outdir, exist_ok=True)
+    outfile = os.path.join(outdir, filename)
+    print(url)
+    r = await session.get(url, stream=True)
+    # skip non-existing or not OK files
+    if r.status_code != 200:
+        return
+    # TODO: compare current and cached ETag values instead of size
+    #       hint: https://pypi.org/project/requests-etag-cache/
+    if os.path.exists(outfile):
+        remote_size = int(r.headers["Content-Length"])
+        local_size = int(os.stat(outfile).st_size)
+        if local_size == remote_size:
+            logging.info("Skipping {}".format(filename))
+            return
+        else:
+            logging.info("Updating {}".format(filename))
+    else:
+        logging.info("Downloading {}".format(filename))
+    # download body asynchronously
+    async with await trio.open_file(outfile, 'wb') as f:
+        async for bytechunk in r.body:
+            await f.write(bytechunk)
+    assert f.closed
+    # extract zip
+    if outfile.endswith(".zip"):
+        logging.info("Extracting {}".format(filename))
+        with zipfile.ZipFile(outfile, 'r') as zip_ref:
+            zip_ref.extractall(outdir)
+
+
+async def download_madavi(outputdir, chip_ids, date_start, date_end):
     """Download files from madavi.de/sensor.
 
     Parameters:
@@ -57,6 +91,7 @@ def download_madavi(outputdir, chip_ids, date_start, date_end):
 
     # define download source
     baseurl = r"https://www.madavi.de/sensor/"
+    baseurl2 = r"https://api-rrd.madavi.de/"
 
     # download
     for chip_id in chip_ids:
@@ -68,36 +103,15 @@ def download_madavi(outputdir, chip_ids, date_start, date_end):
             r"href='(data_csv/.*/data-esp8266-[0-9]{0,12}-[0-9\-]{7,10}\.(?:zip|csv))'",
             html_string
         ))
-        # prepare output directory
-        outdir = os.path.join(outputdir, str(chip_id))
-        os.makedirs(outdir, exist_ok=True)
-        # download files (only if size differs from local)
-        for filename in filelist:
-            url = os.path.join(baseurl, filename)
-            outfile = os.path.join(outdir, os.path.split(filename)[1])
-            r = requests.get(url, stream=True)
-            # skip non-existing or not OK files
-            if r.status_code != 200:
-                continue
-            # TODO: compare current and cached ETag values instead of size
-            #       hint: https://pypi.org/project/requests-etag-cache/
-            if os.path.exists(outfile):
-                remote_size = int(r.headers["Content-Length"])
-                local_size = int(os.stat(outfile).st_size)
-                if local_size == remote_size:
-                    logging.info("Skipping {}".format(filename))
-                    continue
-                else:
-                    logging.info("Updating {}".format(filename))
-            else:
-                logging.info("Downloading {}".format(filename))
-            with open(outfile, "wb") as f:
-                for chunk in r:
-                    f.write(chunk)
-            if outfile.endswith(".zip"):
-                logging.info("Extracting {}".format(filename))
-                with zipfile.ZipFile(outfile, 'r') as zip_ref:
-                    zip_ref.extractall(outdir)
+        urllist = [r"{}/{}".format(baseurl2, filename) for filename in filelist]
+        # download files asynchronously
+        from asks.sessions import Session
+        session = Session(baseurl, connections=30)
+        async with trio.open_nursery() as nursery:
+            for url in urllist:
+                nursery.start_soon(async_download_madavi,
+                    session, url, outputdir, chip_id
+                )
 
 async def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
     sensor_types=["sds011", "dht22", "bme280"]
@@ -130,7 +144,7 @@ async def download_sensorcommunity(outputdir, sensor_ids, date_start, date_end,
                 urllist.append(r"{}/{}/{}_{}_sensor_{}.csv".format(baseurl,
                     datestring, datestring, sensor_type.lower(), sensor_id))
         date += delta
-    # download files asynchronously (only if size differs from local)
+    # download files asynchronously
     from asks.sessions import Session
     session = Session(baseurl, connections=30)
     async with trio.open_nursery() as nursery:
@@ -188,8 +202,8 @@ def download(outputdir, ids="", date_start=None, date_end=None,
         return
 
     if use_madavi:
-        download_madavi(outputdir, chip_ids=ids,
-            date_start=date_start, date_end=date_end
+        trio.run(download_madavi,
+            outputdir, ids, date_start, date_end
         )
     else:
         trio.run(download_sensorcommunity,
