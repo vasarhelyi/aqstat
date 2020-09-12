@@ -42,7 +42,7 @@ def test(inputdir, chip_ids="", names="", date_start=None, date_end=None):
     for i, a in enumerate(sensors[:-1]):
         for b in sensors[i + 1:]:
             corr = time_delay_correlation(a.data[[col]], b.data[[col]],
-                dtmin="-" + dtmax, dtmax=dtmax, freq=freq, window=window,
+                dtmin="-{}".format(dtmax), dtmax=dtmax, freq=freq, window=window,
                 starttime=starttime, endtime=endtime,
             )
             corr.plot()

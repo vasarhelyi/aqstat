@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2020-09-04 16:14+0200\n"
-"PO-Revision-Date: 2020-09-04 16:20+0200\n"
+"POT-Creation-Date: 2020-09-12 07:26+0200\n"
+"PO-Revision-Date: 2020-09-12 07:34+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: hu\n"
@@ -61,6 +61,33 @@ msgstr "napi"
 
 msgid "calibrated"
 msgstr "kalibrált"
+
+msgid "polluted days"
+msgstr "szennyezett napok"
+
+msgid "rolling window"
+msgstr "csúszóablak"
+
+msgid "number of measurements"
+msgstr "mérések száma"
+
+msgid "percent"
+msgstr "százalék"
+
+msgid "period"
+msgstr "időtartam"
+
+msgid "measurements"
+msgstr "mérések"
+
+msgid "sampling median"
+msgstr "medián"
+
+msgid "corr"
+msgstr "korr"
+
+msgid "temp"
+msgstr "hőm"
 
 #~ msgid "hours"
 #~ msgstr "órák"
