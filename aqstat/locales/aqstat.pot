@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2020-09-12 07:26+0200\n"
+"POT-Creation-Date: 2020-10-07 10:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,10 +15,40 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
+msgid "main frequencies"
+msgstr ""
+
+msgid "max"
+msgstr ""
+
+msgid "mean"
+msgstr ""
+
+msgid "median"
+msgstr ""
+
+msgid "min"
+msgstr ""
+
+msgid "name"
+msgstr ""
+
+msgid "polluted days"
+msgstr ""
+
+msgid "days"
+msgstr ""
+
+msgid "count"
+msgstr ""
+
 msgid "temperature"
 msgstr ""
 
 msgid "humidity"
+msgstr ""
+
+msgid "avg"
 msgstr ""
 
 msgid "pressure"
@@ -34,9 +64,6 @@ msgid "PM10 daily notification limit"
 msgstr ""
 
 msgid "PM10 daily emergency limit"
-msgstr ""
-
-msgid "avg"
 msgstr ""
 
 msgid "daily_avg"
@@ -58,9 +85,6 @@ msgid "daily"
 msgstr ""
 
 msgid "calibrated"
-msgstr ""
-
-msgid "polluted days"
 msgstr ""
 
 msgid "rolling window"

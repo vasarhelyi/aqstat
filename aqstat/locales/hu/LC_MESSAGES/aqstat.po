@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2020-09-12 07:26+0200\n"
-"PO-Revision-Date: 2020-09-12 07:34+0200\n"
+"POT-Creation-Date: 2020-10-07 10:40+0200\n"
+"PO-Revision-Date: 2020-10-07 10:42+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: hu\n"
@@ -17,11 +17,41 @@ msgstr ""
 "X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "main frequencies"
+msgstr "főbb gyakoriságok"
+
+msgid "max"
+msgstr "maximum"
+
+msgid "mean"
+msgstr "átlag"
+
+msgid "median"
+msgstr "medián"
+
+msgid "min"
+msgstr "minimum"
+
+msgid "name"
+msgstr "név"
+
+msgid "polluted days"
+msgstr "szennyezett napok"
+
+msgid "days"
+msgstr "napok"
+
+msgid "count"
+msgstr "db"
+
 msgid "temperature"
 msgstr "hőmérséklet"
 
 msgid "humidity"
 msgstr "pára"
+
+msgid "avg"
+msgstr "átlag"
 
 msgid "pressure"
 msgstr "nyomás"
@@ -37,9 +67,6 @@ msgstr "PM10 napi értesítési küszöb"
 
 msgid "PM10 daily emergency limit"
 msgstr "PM10 napi vészhelyzeti küszöb"
-
-msgid "avg"
-msgstr "átlag"
 
 msgid "daily_avg"
 msgstr "napi_átlag"
@@ -61,9 +88,6 @@ msgstr "napi"
 
 msgid "calibrated"
 msgstr "kalibrált"
-
-msgid "polluted days"
-msgstr "szennyezett napok"
 
 msgid "rolling window"
 msgstr "csúszóablak"

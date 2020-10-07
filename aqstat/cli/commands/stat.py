@@ -9,6 +9,7 @@ from aqstat.parse import parse_and_setup_sensors
 from aqstat.stat import time_delay_correlation
 from aqstat.utils import print_title
 
+from aqstat.cli.main import _
 
 
 @click.command()
@@ -42,23 +43,41 @@ def stat(inputdir, chip_ids="", names="", exclude_names="",
     )
 
 
-    print_title("main frequencies")
-    result = DataFrame(columns="min max mean median".split())
-    result.index.name = "name"
+    print_title(_("main frequencies"))
+    result = DataFrame(columns=[_("min"), _("max"), _("mean"), _("median")])
+    result.index.name = _("name")
     for sensor in sensors:
         df = sensor.data.index.to_series().diff()
         result.loc[sensor.name] = [df.min(), df.max(), df.mean(), df.median()]
     print(result)
 
 
-    print_title("polluted days")
-    result = DataFrame(columns="days PM10_avg PM2.5_avg temperature_avg"
-        " humidity_avg PM10>50 PM10>75 PM10>100 PM2.5>25 PM2.5>50".split())
-    result.index.name = "name"
+    print_title(_("polluted days"))
+    result = DataFrame(columns=[
+        _("days"),
+        "PM10_" + _("count"),
+        "PM2.5_" + _("count"),
+        _("temperature") + "_" + _("count"),
+        _("humidity") + "_" + _("count"),
+        "PM10_" + _("avg"),
+        "PM2.5_" + _("avg"),
+        _("temperature") + "_" + _("avg"),
+        _("humidity") + "_" + _("avg"),
+        "PM10>50",
+        "PM10>75",
+        "PM10>100",
+        "PM2.5>25",
+        "PM2.5>50",
+    ])
+    result.index.name = _("name")
     for sensor in sensors:
         daily_data = sensor.data.resample('d').mean()
         result.loc[sensor.name] = [
             len(daily_data),
+            sensor.data.pm10.count(),
+            sensor.data.pm2_5.count(),
+            sensor.data.temperature.count(),
+            sensor.data.humidity.count(),
             sensor.data.pm10.mean(),
             sensor.data.pm2_5.mean(),
             sensor.data.temperature.mean(),
@@ -69,10 +88,12 @@ def stat(inputdir, chip_ids="", names="", exclude_names="",
             daily_data.pm2_5[daily_data.pm2_5 > 25].count(),
             daily_data.pm2_5[daily_data.pm2_5 > 50].count(),
         ]
-    result = result.astype({"days": int, "PM10>50": int, "PM10>75": int,
+    result = result.astype({_("days"): int, "PM10_" + _("count"): int,
+        "PM2.5_" + _("count"): int, _("temperature") +"_" + _("count"): int,
+        _("humidity") + "_" + _("count"): int, "PM10>50": int, "PM10>75": int,
         "PM10>100": int, "PM2.5>25": int, "PM2.5>50": int
     })
-    result.sort_values("PM10_avg", inplace=True, ascending=False)
+    result.sort_values("PM10" + "_" + _("avg"), inplace=True, ascending=False)
     print(result)
 
 
