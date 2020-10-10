@@ -111,12 +111,12 @@ def plot(inputdir, gsod="", chip_ids="",
     # plot multiple sensor data
     if len(sensors) > 1:
         if all or multiple_particle:
-            plot_multiple_pm(sensors, keys=["pm10"])
-            plot_multiple_pm(sensors, keys=["pm10"], window="1h")
-            plot_multiple_pm(sensors, keys=["pm2_5"])
-            plot_multiple_pm(sensors, keys=["pm2_5"], window="1h")
-            plot_multiple_pm(sensors, keys=["pm2_5_calib"])
-            plot_multiple_pm(sensors, keys=["pm2_5_calib"], window="1h")
+            plot_multiple_pm(sensors, "pm10")
+            plot_multiple_pm(sensors, "pm10", window="1h")
+            plot_multiple_pm(sensors, "pm2_5")
+            plot_multiple_pm(sensors, "pm2_5", window="1h")
+            plot_multiple_pm(sensors, "pm2_5_calib")
+            plot_multiple_pm(sensors, "pm2_5_calib", window="1h")
         if all or multiple_humidity:
             plot_multiple_humidity(sensors)
         if all or multiple_temperature:

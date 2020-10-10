@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from numpy.ma import masked_where
+from pandas import concat
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
@@ -250,39 +251,50 @@ def plot_multiple_humidity(sensors):
     plt.legend()
     plt.show()
 
-def plot_multiple_pm(sensors, keys=["pm10", "pm2_5", "pm2_5_calib"], window=None):
+def plot_multiple_pm(sensors, key="pm10", window=None):
     """Plot time series of PM10/PM2.5/PM2.5_calib data from multiple sensors.
 
     Parameters:
         sensors (list(AQData)): the sensors containing the dataset to plot
-        keys (list[str]): the list of keys of the data Series we need to plot.
+        key (str): the key of the data Series we need to plot.
         window(int|offset): size of moving window averaging or None if not used.
 
     """
     ax = plt.figure().gca()
+    alldata = None
     for sensor in sorted(sensors, key=lambda x: x.altitude, reverse=True):
+        # smooth if rolling window is specified
         if window:
             data = sensor.data.rolling(window=window).mean()
-            #data = sensor.data.resample(rule=window).mean()
         else:
             data = sensor.data
-        if "pm10" in keys:
-            data.plot(y="pm10", label="{} PM10 @ {}m".format(
-                sensor.name, sensor.altitude), ax=ax,
-                linewidth=2 if sensor.metadata.sensors["pm10"].type == "OLM" else 1
-            )
-        if "pm2_5" in keys:
-            data.plot(y="pm2_5", label="{} PM2.5 @ {}m".format(
-                sensor.name, sensor.altitude), ax=ax
-            )
-        if "pm2_5_calib" in keys:
-            data.plot(y="pm2_5_calib", label="{} PM2.5 calib @ {}m".format(
-                sensor.name, sensor.altitude), ax=ax
-            )
+        # add data to alldata
+        if alldata is None:
+            alldata = sensor.data[[key]]
+        else:
+            alldata = concat([alldata, sensor.data[[key]]])
+        # add data to plot
+        data.plot(y=key, label="{} {} @ {}m".format(
+            sensor.name, key.upper(), sensor.altitude), ax=ax,
+            linewidth=2 if key == "pm10" and sensor.metadata.sensors["pm10"].type == "OLM" else 1
+        )
         plt.ylabel(r"PM {} ($\mathrm{{\mu g/m^3}}$)".format(_("concentration")))
-    add_pm_limits(keys, ax)
+    add_pm_limits([key], ax)
+    # add alldata daily averages
+    daily_data = alldata.resample('d').mean()
+    daily_data.plot(y=key, color="darkblue", marker="o", linestyle="", label="{} {} {}".format(_("daily"), key.upper(), _("avg")), ax=ax)
+    titles = []
+    if key == "pm10":
+        titles.append(r"PM10 {}: {}/{}".format(
+            _("polluted days"),
+            daily_data.pm10[daily_data.pm10 > pm_limits[_("PM10 daily health limit")][0]].count(),
+            len(daily_data),
+        ))
+
+    # set other attributes
     if window:
-        plt.title("rolling window: {}".format(window))
+        titles.append("{}: {}".format(_("rolling window"), window))
+    plt.title("\n".join(titles[::-1]))
     plt.grid(axis='y')
     ax.set_ylim([0, None])
     plt.legend()
