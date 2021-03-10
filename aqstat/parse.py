@@ -237,13 +237,14 @@ def parse_madavi_csv(filename):
     return data
 
 
-def parse_sensorcommunity_csv(filename):
+def parse_sensorcommunity_csv(filename, sensor_type: str):
     """Read raw AQ data from sensor.community .csv file.
 
     Parameters:
         filename (path): the file to parse. Format of the file is expected to be
             the one used by the luftdaten.info project, e.g. as here:
             https://archive.sensor.community/2020-01-13/
+        sensor_type: sensor type to parse
 
     Return:
         pandas DataFrame object containing the data stored in the .csv file,
@@ -252,26 +253,26 @@ def parse_sensorcommunity_csv(filename):
     """
 
     data = read_csv(filename, sep=";", skipinitialspace=True, parse_dates=False)
-    if "sensor_id" in data.columns:
+
+    if sensor_type == "olm":
+        # data["timestamp"] = to_datetime(data["timestamp"], format="%Y.%m.%d %H:%M:%S")
+        # custom hack format of OLM, lets parse dates manually
+        # (e.g., 24:00 is invalid for pandas)
+        for i, row in data.iterrows():
+            d, t = data.at[i, "timestamp"].split()
+            data.at[i, "timestamp"] = to_datetime(d, format="%Y.%m.%d") + Timedelta(
+                hours=int(t.split(":")[0])
+            )
+        data.set_index("timestamp", inplace=True)
+        # OLM data is always in CET, so lets convert it to UTC
+        data.index = data.index.tz_localize("CET").tz_convert("UTC").tz_localize(None)
+    else:
         # sensorcommunity format
         data["timestamp"] = to_datetime(data["timestamp"], format="%Y-%m-%dT%H:%M:%S")
         # sensor.community data is time-zone aware and is de-localized to UTC
         # during parsing, but we need to localize again
         # data.index = data.index.tz_localize('UTC')
-    else:
-        # custom hack format of OLM, lets parse dates manually
-        # (e.g., 24:00 is invalid for pandas)
-        for i, row in data.iterrows():
-            d, t = data.at[i, "timestamp"].split()
-            tnew = to_datetime(d, format="%Y.%m.%d") + Timedelta(
-                hours=int(t.split(":")[0])
-            )
-            # OLM data is always in CET, so lets convert it to UTC
-            data.at[i, "timestamp"] = (
-                tnew.tz_localize("CET").tz_convert("UTC").tz_localize(None)
-            )
-    # set timestamps as index
-    data.set_index("timestamp", inplace=True)
+        data.set_index("timestamp", inplace=True)
 
     return data
 

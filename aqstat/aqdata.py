@@ -142,7 +142,7 @@ class AQData(object):
         # note that custom (OLM) files are also saved in this format for
         # convenience
         else:
-            raw_data = parse_sensorcommunity_csv(filename)
+            raw_data = parse_sensorcommunity_csv(filename, sensor_type)
             # this is our custom file from OLM, saved in compatible format
             # with sensor.community filenames and files
             if sensor_type == "olm":

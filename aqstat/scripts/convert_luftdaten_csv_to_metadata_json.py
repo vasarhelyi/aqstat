@@ -40,7 +40,7 @@ def main(inputfile="", outputdir=""):
 
     chip_id, sensor_id, sensor_type, date = parse_metadata_from_filename(inputfile)
     if sensor_id:
-        data = parse_sensorcommunity_csv(inputfile)
+        data = parse_sensorcommunity_csv(inputfile, sensor_type)
         lat = data["lat"][0]
         lon = data["lon"][0]
         if sensor_type == "dht22":
