@@ -69,11 +69,11 @@ class AQData(object):
         # }
         # Note that this method is only valid (if valid) for SDS011
         self.data["pm2_5_calib"] = self.data.pm2_5 / (
-            -0.509 * log(self.data.pm10_per_pm2_5) + 1.2203
+            -0.509 * log(self.data.pm10_per_pm2_5.astype(float)) + 1.2203
         )
         # remove data points where pm10/pm2_5 is larger than 8 as this is
         # outside of the region of calibration in the article above
-        self.data["pm2_5_calib"][self.data["pm10_per_pm2_5"] > 8] = None
+        self.data.at[self.data.pm10_per_pm2_5 > 8, "pm2_5_calib"] = None
 
     @property
     def chip_id(self):
