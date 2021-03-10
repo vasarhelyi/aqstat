@@ -7,4 +7,5 @@ htmlcov/
 tmp/
 venv/
 .venv/
+.vscode/
 stashed-*.patch

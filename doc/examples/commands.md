@@ -27,4 +27,11 @@ python bin/aqstat -v download data 39718 --date-start 2020-05-28 --date-end 2020
 
 == Plot ==
 
+Plot all individual PM-related data from folder `data`
+for sensor name `Verõce-Zentai`:
 
+```
+python bin/aqstat plot data -n Verõce-Zentai -p
+```
+
+Pl

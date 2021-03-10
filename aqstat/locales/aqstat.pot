@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2020-10-07 10:40+0200\n"
+"POT-Creation-Date: 2020-10-10 07:07+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -84,10 +84,10 @@ msgstr ""
 msgid "daily"
 msgstr ""
 
-msgid "calibrated"
+msgid "rolling window"
 msgstr ""
 
-msgid "rolling window"
+msgid "calibrated"
 msgstr ""
 
 msgid "number of measurements"

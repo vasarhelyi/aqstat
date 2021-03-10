@@ -3,9 +3,13 @@
 from numpy import log
 from pandas import DataFrame, Timedelta, Timestamp, to_datetime, merge
 
-from .parse import parse_metadata_from_filename, parse_madavi_csv, \
-    parse_sensorcommunity_csv
+from .parse import (
+    parse_metadata_from_filename,
+    parse_madavi_csv,
+    parse_sensorcommunity_csv,
+)
 from .metadata import AQMetaData, SensorInfo
+
 
 class AQData(object):
     """A generic class to store AQ sensor parameters and sensor data.
@@ -17,25 +21,32 @@ class AQData(object):
 
     data_columns = "temperature humidity pressure pm10 pm2_5".split()
 
-    def __init__(self, metadata=AQMetaData(),
+    def __init__(
+        self,
+        metadata=AQMetaData(),
         data=DataFrame(columns=data_columns, index=to_datetime([])),
-        date_start=None, date_end=None,
+        date_start=None,
+        date_end=None,
     ):
-        self.metadata = metadata # metadata, useful descriptors
-        self.data = data.sort_index() # all the time series of AQ data as pandas DataFrame indexed by datetime
+        self.metadata = metadata  # metadata, useful descriptors
+        self.data = (
+            data.sort_index()
+        )  # all the time series of AQ data as pandas DataFrame indexed by datetime
         if date_start is not None:
             self.data = self.data[self.data.index.date >= Timestamp(date_start)]
         if date_end is not None:
             self.data = self.data[self.data.index.date <= Timestamp(date_end)]
 
     def __repr__(self):
-        return str({
-            "name": self.name,
-            "chip_id": self.chip_id,
-            "sensor_ids": self.sensor_ids,
-            "data": self.data,
-            "metadata": self.metadata
-        })
+        return str(
+            {
+                "name": self.name,
+                "chip_id": self.chip_id,
+                "sensor_ids": self.sensor_ids,
+                "data": self.data,
+                "metadata": self.metadata,
+            }
+        )
 
     @property
     def altitude(self):
@@ -58,7 +69,8 @@ class AQData(object):
         # }
         # Note that this method is only valid (if valid) for SDS011
         self.data["pm2_5_calib"] = self.data.pm2_5 / (
-            -0.509 * log(self.data.pm10_per_pm2_5) + 1.2203)
+            -0.509 * log(self.data.pm10_per_pm2_5) + 1.2203
+        )
         # remove data points where pm10/pm2_5 is larger than 8 as this is
         # outside of the region of calibration in the article above
         self.data["pm2_5_calib"][self.data["pm10_per_pm2_5"] > 8] = None
@@ -89,8 +101,11 @@ class AQData(object):
         # create matching dataset with rows that have similar timestamps
         # TODO: interpolate datasets to have more accurate matching on
         #       stochastically timestamped data
-        other_matched = other.data.reindex(self.data.index, method='nearest',
-            tolerance=Timedelta(seconds=tolerance), axis=0
+        other_matched = other.data.reindex(
+            self.data.index,
+            method="nearest",
+            tolerance=Timedelta(seconds=tolerance),
+            axis=0,
         )
         # calculate correlation
         result = self.data.corrwith(other=other_matched, method=method, drop=True)
@@ -134,40 +149,59 @@ class AQData(object):
                 data = raw_data[["P1"]]
                 data.columns = ["pm10"]
                 data.reindex(self.data_columns)
-                metadata = AQMetaData(sensors={
-                    "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
-                })
+                metadata = AQMetaData(
+                    sensors={
+                        "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
+                    }
+                )
             # below are the sensor types supported by us from sensor.community
             elif sensor_type == "sds011":
                 data = raw_data[["P1", "P2"]]
                 data.columns = ["pm10", "pm2_5"]
                 data.reindex(self.data_columns)
-                metadata = AQMetaData(sensors={
-                    "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
-                    "pm2_5": SensorInfo("pm2_5", sensor_type.upper(), sensor_id),
-                })
+                metadata = AQMetaData(
+                    sensors={
+                        "pm10": SensorInfo("pm10", sensor_type.upper(), sensor_id),
+                        "pm2_5": SensorInfo("pm2_5", sensor_type.upper(), sensor_id),
+                    }
+                )
             elif sensor_type == "dht22":
                 data = raw_data[["temperature", "humidity"]]
                 data.columns = ["temperature", "humidity"]
                 data.reindex(self.data_columns)
-                metadata = AQMetaData(sensors={
-                    "temperature": SensorInfo("temperature", sensor_type.upper(), sensor_id),
-                    "humidity": SensorInfo("humidity", sensor_type.upper(), sensor_id),
-                })
+                metadata = AQMetaData(
+                    sensors={
+                        "temperature": SensorInfo(
+                            "temperature", sensor_type.upper(), sensor_id
+                        ),
+                        "humidity": SensorInfo(
+                            "humidity", sensor_type.upper(), sensor_id
+                        ),
+                    }
+                )
             elif sensor_type == "bme280":
                 data = raw_data[["temperature", "humidity", "pressure"]]
                 data.columns = ["temperature", "humidity", "pressure"]
                 data.reindex(self.data_columns)
-                metadata = AQMetaData(sensors={
-                    "temperature": SensorInfo("temperature", sensor_type.upper(), sensor_id),
-                    "humidity": SensorInfo("humidity", sensor_type.upper(), sensor_id),
-                    "pressure": SensorInfo("pressure", sensor_type.upper(), sensor_id),
-                })
+                metadata = AQMetaData(
+                    sensors={
+                        "temperature": SensorInfo(
+                            "temperature", sensor_type.upper(), sensor_id
+                        ),
+                        "humidity": SensorInfo(
+                            "humidity", sensor_type.upper(), sensor_id
+                        ),
+                        "pressure": SensorInfo(
+                            "pressure", sensor_type.upper(), sensor_id
+                        ),
+                    }
+                )
             else:
                 raise ValueError("Not supported sensor type: {}".format(sensor_type))
 
-        return self(data=data, metadata=metadata,
-            date_start=date_start, date_end=date_end)
+        return self(
+            data=data, metadata=metadata, date_start=date_start, date_end=date_end
+        )
 
     @property
     def median_sampling_time(self):
@@ -198,10 +232,10 @@ class AQData(object):
         # first append other to self (assuming columns are the same)
         data = self.data.append(other.data, sort=False).sort_index()
         # then get time difference as group indicator
-        data['index'] = data.index
-        data['diff'] = (data['index'].diff().abs() > tolerance).cumsum()
+        data["index"] = data.index
+        data["diff"] = (data["index"].diff().abs() > tolerance).cumsum()
         # then group and aggregate closeby rows, using the first not NaN value
-        data = data.groupby('diff').aggregate('first').set_index('index')
+        data = data.groupby("diff").aggregate("first").set_index("index")
         data.index.name = None
 
         # change data inplace
@@ -210,10 +244,7 @@ class AQData(object):
             self.data = data
             return None
         # or create new class with merged data
-        return self.__class__(
-            metadata=self.metadata.merge(other.metadata),
-            data=data
-        )
+        return self.__class__(metadata=self.metadata.merge(other.metadata), data=data)
 
     @property
     def name(self):
@@ -225,6 +256,6 @@ class AQData(object):
 
     @property
     def sensor_ids(self):
-        return list(set(self.metadata.sensors[key].sensor_id
-            for key in self.metadata.sensors)
+        return list(
+            set(self.metadata.sensors[key].sensor_id for key in self.metadata.sensors)
         )

@@ -4,32 +4,37 @@ from datetime import datetime
 import json
 import logging
 import os
-from pandas import read_csv, to_datetime, Timedelta
+from pandas import read_csv, to_datetime, Timedelta, Series
 from pathlib import Path
 
 from .utils import find_sensor_with_id, merge_sensors_with_shared_name
+
 
 def create_id_dirs_from_json(outputdir, sensor_id=False, chip_id=False):
     """Create subdirectories under outputdir for all IDs found in .json
     metadata files under outputdir.
 
     """
-    sensors = parse_sensors_from_path(outputdir, chip_ids=[], names=[],
-        only_metadata=True
+    sensors = parse_sensors_from_path(
+        outputdir, chip_ids=[], names=[], only_metadata=True
     )
     for sensor in sensors:
         if sensor_id:
             for sid in sensor.sensor_ids:
-                os.makedirs(os.path.join(outputdir, str(sid)),
-                    exist_ok=True
-                )
+                os.makedirs(os.path.join(outputdir, str(sid)), exist_ok=True)
         if chip_id:
-            os.makedirs(os.path.join(outputdir, str(sensor.chip_id)),
-                exist_ok=True
-            )
+            os.makedirs(os.path.join(outputdir, str(sensor.chip_id)), exist_ok=True)
 
-def parse_and_setup_sensors(inputdir, chip_ids="", names="", exclude_names="",
-    geo_center="", geo_radius=None, date_start=None, date_end=None
+
+def parse_and_setup_sensors(
+    inputdir,
+    chip_ids="",
+    names="",
+    exclude_names="",
+    geo_center="",
+    geo_radius=None,
+    date_start=None,
+    date_end=None,
 ):
     # get list of chip IDs and names from option
     chip_ids = parse_ids_from_string_or_dir(string=chip_ids)
@@ -49,10 +54,16 @@ def parse_and_setup_sensors(inputdir, chip_ids="", names="", exclude_names="",
         geo_center = None
 
     # parse sensors from files
-    sensors = parse_sensors_from_path(inputdir, chip_ids=chip_ids,
-        names=names, exclude_names=exclude_names,
-        geo_center=geo_center, geo_radius=geo_radius,
-        date_start=date_start, date_end=date_end)
+    sensors = parse_sensors_from_path(
+        inputdir,
+        chip_ids=chip_ids,
+        names=names,
+        exclude_names=exclude_names,
+        geo_center=geo_center,
+        geo_radius=geo_radius,
+        date_start=date_start,
+        date_end=date_end,
+    )
     # perform calibration on sensor data
     for sensor in sensors:
         sensor.calibrate()
@@ -60,6 +71,7 @@ def parse_and_setup_sensors(inputdir, chip_ids="", names="", exclude_names="",
     sensors = merge_sensors_with_shared_name(sensors)
 
     return sensors
+
 
 def parse_gsod_data(filename):
     """Parse Global Summary of the Day (GSOD) data from a comma separated
@@ -78,9 +90,13 @@ def parse_gsod_data(filename):
 
     """
     # parse .csv
-    data = read_csv(filename, sep=",", parse_dates=["YEARMODA"],
-        index_col="YEARMODA", infer_datetime_format=True,
-        skipinitialspace=True
+    data = read_csv(
+        filename,
+        sep=",",
+        parse_dates=["YEARMODA"],
+        index_col="YEARMODA",
+        infer_datetime_format=True,
+        skipinitialspace=True,
     )
     # remove space from end of column names (reserved for flag indent)
     data.columns = [x.strip() for x in data.columns]
@@ -108,6 +124,7 @@ def parse_gsod_data(filename):
 
     return data
 
+
 def parse_metadata_from_madavi_csv_filename(filename):
     """Parse chip_id and date from a raw madavi.de AQ .csv filename.
 
@@ -129,6 +146,7 @@ def parse_metadata_from_madavi_csv_filename(filename):
 
     # failure
     return (None, None)
+
 
 def parse_metadata_from_sensorcommunity_csv_filename(filename):
     """Parse sensor id, sensor type and date from a raw luftdaten.info AQ .csv
@@ -160,6 +178,7 @@ def parse_metadata_from_sensorcommunity_csv_filename(filename):
     # failure
     return (None, None, None)
 
+
 def parse_metadata_from_filename(filename):
     """Parse chip_id, sensor_id, sensor_type and data from filename if possible.
 
@@ -184,10 +203,12 @@ def parse_metadata_from_filename(filename):
 
     chip_id, date = parse_metadata_from_madavi_csv_filename(filename)
     if chip_id is None:
-        sensor_id, sensor_type, date = \
-            parse_metadata_from_sensorcommunity_csv_filename(filename)
+        sensor_id, sensor_type, date = parse_metadata_from_sensorcommunity_csv_filename(
+            filename
+        )
 
     return (chip_id, sensor_id, sensor_type, date)
+
 
 def parse_madavi_csv(filename):
     """Read raw AQ data from madavi.de .csv file.
@@ -202,13 +223,19 @@ def parse_madavi_csv(filename):
         indexed with timestamps (by default defined in the "Time" column).
 
     """
-    data = read_csv(filename, sep=";", parse_dates=["Time"], index_col="Time",
-        infer_datetime_format=True, skipinitialspace=True
+    data = read_csv(
+        filename,
+        sep=";",
+        parse_dates=["Time"],
+        index_col="Time",
+        infer_datetime_format=True,
+        skipinitialspace=True,
     )
     # madavi.de timestamps are always in UTC, so lets localize it
-    #data.index = data.index.tz_localize('UTC')
+    # data.index = data.index.tz_localize('UTC')
 
     return data
+
 
 def parse_sensorcommunity_csv(filename):
     """Read raw AQ data from sensor.community .csv file.
@@ -224,33 +251,41 @@ def parse_sensorcommunity_csv(filename):
 
     """
 
-    data = read_csv(filename, sep=";", parse_dates=["timestamp"],
-        index_col="timestamp", infer_datetime_format=True,
-        skipinitialspace=True
-    )
-
-    # custom format of OLM, lets parse dates manually
-    # (e.g., 24:00 is invalid for pandas)
-    if type(data.index[0]) == str:
-        newindex = []
-        for x in data.index:
-            d, t = x.split()
-            newindex.append(to_datetime(d) + Timedelta(hours=int(t.split(":")[0])))
-        data["timestamp"] = newindex
-        data.set_index("timestamp", inplace=True)
-        # OLM data is always in CET, so lets convert it to UTC
-        data.index = data.index.tz_localize('CET').tz_convert('UTC').tz_localize(None)
-     #else:
+    data = read_csv(filename, sep=";", skipinitialspace=True, parse_dates=False)
+    if "sensor_id" in data.columns:
+        # sensorcommunity format
+        data["timestamp"] = to_datetime(data["timestamp"], format="%Y-%m-%dT%H:%M:%S")
         # sensor.community data is time-zone aware and is de-localized to UTC
         # during parsing, but we need to localize again
-        #data.index = data.index.tz_localize('UTC')
+        # data.index = data.index.tz_localize('UTC')
+    else:
+        # custom hack format of OLM, lets parse dates manually
+        # (e.g., 24:00 is invalid for pandas)
+        for i, row in data.iterrows():
+            d, t = data.at[i, "timestamp"].split()
+            tnew = to_datetime(d, format="%Y.%m.%d") + Timedelta(
+                hours=int(t.split(":")[0])
+            )
+            # OLM data is always in CET, so lets convert it to UTC
+            data.at[i, "timestamp"] = (
+                tnew.tz_localize("CET").tz_convert("UTC").tz_localize(None)
+            )
+    # set timestamps as index
+    data.set_index("timestamp", inplace=True)
 
     return data
 
-def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
-    geo_center=None, geo_radius=None,
-    date_start=None, date_end=None,
-    only_metadata=False
+
+def parse_sensors_from_path(
+    inputdir,
+    chip_ids=[],
+    names=[],
+    exclude_names=[],
+    geo_center=None,
+    geo_radius=None,
+    date_start=None,
+    date_end=None,
+    only_metadata=False,
 ):
     """Parse all sensor data and metadata for the given chip_ids in the given
     period from inputdir.
@@ -321,13 +356,21 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
     # check geo_center here once we already have exact lat-lon for sure
     if geo_center:
         if type(geo_center) == str:
-            logging.warning("Could not find metadata to be used as geo center, filter is inactive")
+            logging.warning(
+                "Could not find metadata to be used as geo center, filter is inactive"
+            )
         else:
             filtered = []
             for sensor in sensors:
-                if latlon_distance(geo_center[0], geo_center[1],
-                    sensor.metadata.location.lat,
-                    sensor.metadata.location.lon) <= geo_radius:
+                if (
+                    latlon_distance(
+                        geo_center[0],
+                        geo_center[1],
+                        sensor.metadata.location.lat,
+                        sensor.metadata.location.lon,
+                    )
+                    <= geo_radius
+                ):
                     filtered.append(sensor)
             sensors = filtered
 
@@ -358,17 +401,14 @@ def parse_sensors_from_path(inputdir, chip_ids=[], names=[], exclude_names=[],
             continue
         # parse sensor file
         logging.info("Parsing {}".format(filename))
-        newsensor = AQData.from_csv(filename, date_start=date_start,
-            date_end=date_end
-        )
+        newsensor = AQData.from_csv(filename, date_start=date_start, date_end=date_end)
         # add current sensor data to existing list
         i = find_sensor_with_id(sensors, chip_id=chip_id, sensor_id=sensor_id)
         if i is not None:
             sensors[i].merge(newsensor, inplace=True)
 
-
-
     return [s for s in sensors if not s.data.empty]
+
 
 def parse_ids_from_string_or_dir(string=None, path=None):
     """Parse (sensor or chip) ids from a comma separated list or from
@@ -391,8 +431,10 @@ def parse_ids_from_string_or_dir(string=None, path=None):
             logging.warn("No valid ids could be parsed from string '{}'".format(string))
     # or from dir
     elif path:
-        ids = [int(x) for x in os.listdir(path) if os.path.isdir(
-            os.path.join(path, x)) and x.isdigit()
+        ids = [
+            int(x)
+            for x in os.listdir(path)
+            if os.path.isdir(os.path.join(path, x)) and x.isdigit()
         ]
         if not ids:
             logging.warn("No valid ids could be parsed from path '{}'".format(path))

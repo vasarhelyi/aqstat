@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "aqstat"
+version = "1.0.0"
+description = "Toolset for visualizing Air Quality Data from https://sensor.community"
+authors = ["Gabor Vasarhelyi <vasarhelyi@collmot.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7.1"
+click = "^7.1.2"
+click-option-group = "^0.5.2"
+requests = "^2.25.1"
+pandas = "^1.2.3"
+trio = "^0.18.0"
+asks = "^2.4.12"
+matplotlib = "^3.3.4"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+aqstat = "aqstat.cli.main:start"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
