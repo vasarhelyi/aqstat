@@ -53,7 +53,7 @@ To get some examples on usage, check out the `doc\examples\commands.md` file.
 
 Local sensor data is stored in folders named after sensor IDs. There are two basic data sources supported currently, a bit of a problem is that they use different IDs for different sensors (madavi.de uses a single `chip_id`, sensor.community uses a `sensor_id` for all sensors in a given measurement unit. Furthermore, these two sources store slightly different information about the sensors.
 
-To obtain a general easy-to-use reference for all sensor data, a local description of all sensors can be given optionally. A simple JSON format is used for that, please check out the `doc\examples\metadata.json` file as an example how to fill the JSON form for a single sensor.
+To obtain a general easy-to-use reference for all sensor data, a local description of all sensors can be given optionally. A simple JSON format is used for that, please check out the `doc\examples\metadata.json` file as an example how to fill the JSON form for a single sensor, or use the `scripts\convert_luftdaten_csv_to_metadata_json.py` script to generate .json files from the sensor data directly.
 
 The overall sensor database structure should look like something like this:
 
