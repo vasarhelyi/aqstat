@@ -1,8 +1,12 @@
-To create the `.pot` file, run python's `pygettext.py` script,
+# Creating translations
+
+This folder is preserved for translations for the generated aqstat plots.
+
+To create or update the main `aqstat.pot` file, run Python's `pygettext.py` script,
 located at `<python dir>\Tools\i18n\pygettext.py`. For example:
 
 ```
-python c:\Users\ubi\AppData\Local\Programs\Python\Python37\Tools\i18n\pygettext.py --no-location -d aqstat ..\.
+python c:\Users\ubi\AppData\Local\Programs\Python\Python39\Tools\i18n\pygettext.py --no-location -d aqstat ..\.
 ```
 
-To edit translations, use e.g. poedit.
+To edit translations, use e.g. [Poedit](https://poedit.net/).
