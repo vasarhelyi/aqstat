@@ -2,6 +2,7 @@ __pycache__
 *.pyc
 *.egg-info
 data/
+dist/
 doc/_build
 htmlcov/
 tmp/
