@@ -3,6 +3,10 @@ name = "aqstat"
 version = "1.0.0"
 description = "Toolset for visualizing Air Quality Data from https://sensor.community"
 authors = ["Gabor Vasarhelyi <vasarhelyi@hal.elte.hu>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/vasarhelyi/aqstat"
+keywords = ["air quality", "air pollution", "sensor.community", "luftdaten.info"]
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
