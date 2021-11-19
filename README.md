@@ -1,21 +1,28 @@
 # AQStat
 
-`aqstat` is a command line Python tool for visualizing air quality data
-collected under the [luftdaten.info](https://luftdaten.info/) project.
+`aqstat` is a command line Python tool for visualizing air quality data collected under the [luftdaten.info](https://luftdaten.info/) project.
 
 # Install
 
 `aqstat` is written in Python, so installation and usage is platform-independent.
 
-## Prerequisites
+## Requirements
 
 * Install git
 * Get Python 3.7 or later
-* Install Poetry according to its [official install guide](https://python-poetry.org/docs/#installation).
+* If you need the latest development version or you wish to modify the code, install [Poetry](https://python-poetry.org/docs/#installation) as well.
 
-## Install using Poetry
+## Install latest release from PyPI
 
-Installation should be as simple as running the following code:
+The latest release is hosted at the [Python Package Index (PyPI) ](https://pypi.org/project/aqstat). To install `aqstat` from there, simply run:
+
+```
+pip install aqstat
+```
+
+## Install latest source from GitHub
+
+The latest development code is available at [GitHub](https://github.com/vasarhelyi/aqstat). Installation should be as simple as running the following:
 
 ```
 git clone https://github.com/vasarhelyi/aqstat.git
@@ -23,20 +30,13 @@ cd aqstat
 poetry install
 ```
 
-As `aqstat` uses Poetry, all Python package dependencies will be installed
-automatically in a local virtual environment under `.venv` in the project folder.
-
-# Getting updates
-
-If you `git pull` later on to get updates, it might be needed to rerun
-`poetry install` to update possibly changed dependencies properly.
-
+As `aqstat` uses Poetry, all Python package dependencies will be installed automatically in a local virtual environment under `.venv` in the project folder.
 
 # Usage
 
 ## Basic usage
 
-Run `poetry run aqstat --help` to get a quick overview on the usage of `aqstat`. There are three basic commands currently available:
+Run `aqstat --help` to get a quick overview on the usage of `aqstat`. There are three basic commands currently available:
 
   * `download` helps you retreive air quality sensor data from the net to your local computer for later analysis
   * `plot` lets you visualize air quality data of selected sensors
@@ -44,9 +44,13 @@ Run `poetry run aqstat --help` to get a quick overview on the usage of `aqstat`.
 
 An additional `test` command is provided as a development section to test different work-in-progress stuff.
 
-More detailed help on individual commands is also available. For example, run `poetry run aqstat download --help` to get help on data download options.
+More detailed help on individual commands is also available. For example, run `aqstat download --help` to get help on data download options.
 
 To get some examples on usage, check out the `doc\examples\commands.md` file.
+
+## Usage with Poetry
+
+To execute `aqstat` using Poetry, type `poetry run aqstat` from the cloned project folder.
 
 
 ## Sensor database
