@@ -1,7 +1,7 @@
 """AQ Class definition for Air Quality data analysis."""
 
 from numpy import log
-from pandas import DataFrame, Timedelta, Timestamp, to_datetime, merge
+from pandas import DataFrame, Timedelta, Timestamp, to_datetime
 
 from .parse import (
     parse_metadata_from_filename,
@@ -73,7 +73,7 @@ class AQData(object):
         )
         # remove data points where pm10/pm2_5 is larger than 8 as this is
         # outside of the region of calibration in the article above
-        self.data.at[self.data.pm10_per_pm2_5 > 8, "pm2_5_calib"] = None
+        self.data.loc[self.data.pm10_per_pm2_5 > 8, "pm2_5_calib"] = None
 
     @property
     def chip_id(self):
@@ -230,7 +230,7 @@ class AQData(object):
         """
 
         # first append other to self (assuming columns are the same)
-        data = self.data.append(other.data, sort=False).sort_index()
+        data = self.data._append(other.data, sort=False).sort_index()
         # then get time difference as group indicator
         data["index"] = data.index
         data["diff"] = (data["index"].diff().abs() > tolerance).cumsum()
