@@ -9,7 +9,7 @@
 ## Requirements
 
 * Install git
-* Get Python 3.7 or later
+* Get Python 3.9 or later
 * If you need the latest development version or you wish to modify the code, install [Poetry](https://python-poetry.org/docs/#installation) as well.
 
 ## Install latest release from PyPI
