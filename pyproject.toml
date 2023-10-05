@@ -9,14 +9,14 @@ repository = "https://github.com/vasarhelyi/aqstat"
 keywords = ["air quality", "air pollution", "sensor.community", "luftdaten.info"]
 
 [tool.poetry.dependencies]
-python = "^3.7.1"
+python = "^3.9"
 click = "^7.1.2"
 click-option-group = "^0.5.2"
 requests = "^2.25.1"
-pandas = "^1.2.3"
+pandas = "2.0"
 trio = "^0.18.0"
 asks = "^2.4.12"
-matplotlib = "^3.3.4"
+matplotlib = "^3.8"
 
 [tool.poetry.dev-dependencies]
 
