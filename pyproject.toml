@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aqstat"
-version = "1.0.1"
+version = "1.0.2"
 description = "Toolset for visualizing Air Quality Data from https://sensor.community"
 authors = ["Gabor Vasarhelyi <vasarhelyi@hal.elte.hu>"]
 license = "MIT"
