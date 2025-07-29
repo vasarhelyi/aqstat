@@ -1,6 +1,5 @@
 """Implementation of the 'download' command for AQstat."""
 
-import asks
 import click
 import datetime
 import logging
@@ -13,7 +12,6 @@ import zipfile
 from aqstat.parse import (
     create_id_dirs_from_json,
     parse_ids_from_string_or_dir,
-    parse_sensors_from_path,
 )
 from aqstat.utils import last_day_of_month
 

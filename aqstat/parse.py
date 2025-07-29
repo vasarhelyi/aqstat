@@ -1,10 +1,9 @@
 """Parsing functions for AQData classes."""
 
 from datetime import datetime
-import json
 import logging
 import os
-from pandas import read_csv, to_datetime, Timedelta, Series
+from pandas import read_csv, to_datetime, Timedelta
 from pathlib import Path
 
 from .utils import find_sensor_with_id, merge_sensors_with_shared_name
