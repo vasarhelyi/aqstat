@@ -18,8 +18,6 @@ trio = "^0.18.0"
 asks = "^2.4.12"
 matplotlib = "^3.9.1"
 
-[tool.poetry.dev-dependencies]
-
 [tool.poetry.scripts]
 aqstat = "aqstat.cli.main:start"
 
